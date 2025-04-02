@@ -1,6 +1,7 @@
 import cv2
 from ultralytics import YOLO
 import configparser
+import time
 
 class StickDetector:    
     def __init__(self, config_file="config"):
@@ -16,12 +17,13 @@ class StickDetector:
         self.drop_threshold = int(config['Settings'].get('drop_threshold', 100))    # Pixels
         self.target_class_id = int(config['Settings'].get('target_class_id', 39))   # Class ID to detect
         self.yolo_model = config['Settings'].get('yolo_model', 'yolo11n.pt')   # Path to YOLO model
+        self.verbose = config.getboolean('Settings', 'verbose', fallback=False)  # Verbose output
 
         # Initialize variables
         self.prev_y = None
         self.current_y = None
         self.stick_detected = False                
-        self.frame = None  # Store the latest frame        
+        self.frame = None  # Store the latest frame         
         
         # Load YOLO model
         self.model = YOLO(self.yolo_model)
@@ -40,8 +42,14 @@ class StickDetector:
 
     def detect_stick(self, frame):
         """Detect the stick in the frame and draw bounding box"""
+        
+        start_time = time.time()        
         # Run YOLO inference with verbose=False to silence output
         results = self.model(frame, verbose=False)
+        end_time = time.time()
+        if self.verbose:
+            print(f"YOLO Inference Time: {end_time - start_time:.2f} seconds")
+
         stick_detected_this_frame = False
         self.current_y = None
 
@@ -52,7 +60,8 @@ class StickDetector:
                     x, y, w, h = box
                     stick_detected_this_frame = True
                     self.current_y = int(y)
-                    print(f"Detected stick at Y: {self.current_y}")                    
+                    if self.verbose:
+                        print(f"Detected stick at Y: {self.current_y}")
                     # Draw bounding box                    
                     cv2.rectangle(frame, (int(x - w/2), int(y - h/2)), 
                                  (int(x + w/2), int(y + h/2)), (0, 255, 0), 2)

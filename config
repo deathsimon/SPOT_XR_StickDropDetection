@@ -7,3 +7,5 @@ drop_threshold = 50
 target_class_id = 39
 # Path to YOLO model file
 yolo_model = yolo11n.pt
+# Print all the information (YOLO inference time, Y of the detected object, etc.)
+verbose = True
