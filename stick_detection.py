@@ -1,21 +1,33 @@
 import cv2
 from ultralytics import YOLO
+import configparser
 
-class StickDetector:
-    def __init__(self, camera_index=0, target_class_id=39, drop_threshold=50):
+class StickDetector:    
+    def __init__(self, config_file="config"):
+        # Load configuration
+        config = configparser.ConfigParser()
+        config.read(config_file)
+
+        if 'Settings' not in config:
+            raise Exception(f"Error: 'Settings' section not found in {config_file}")
+        
+        # Read parameters from config
+        self.camera_index = int(config['Settings'].get('camera_index', 0))
+        self.drop_threshold = int(config['Settings'].get('drop_threshold', 100))    # Pixels
+        self.target_class_id = int(config['Settings'].get('target_class_id', 39))   # Class ID to detect
+        self.yolo_model = config['Settings'].get('yolo_model', 'yolo11n.pt')   # Path to YOLO model
+
         # Initialize variables
         self.prev_y = None
         self.current_y = None
-        self.stick_detected = False
-        self.drop_threshold = drop_threshold  # Pixels
-        self.target_class_id = target_class_id  # Class ID to detect (e.g., 39 for "bottle")
+        self.stick_detected = False                
         self.frame = None  # Store the latest frame        
         
         # Load YOLO model
-        self.model = YOLO("yolo11n.pt")  # Nano version for speed
+        self.model = YOLO(self.yolo_model)
 
         # Initialize video capture
-        self.cap = cv2.VideoCapture(camera_index)
+        self.cap = cv2.VideoCapture(self.camera_index)
         if not self.cap.isOpened():
             raise Exception(f"Error: Could not open video stream at index {camera_index}")
         
@@ -81,6 +93,6 @@ class StickDetector:
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    # Initialize detector with camera index and target class ID
-    detector = StickDetector(camera_index=4, target_class_id=39)  # 39 = "bottle" in COCO, change as needed (e.g., 36 = "baseball bat")
+    # Initialize detector with config file
+    detector = StickDetector(config_file="config")
     detector.run()

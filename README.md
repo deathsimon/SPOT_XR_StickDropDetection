@@ -6,6 +6,13 @@ Its primary function is to detect a target stick in the video stream and trigger
 
 We utilize a YOLO v11m model to detect the stick's position. If the stick moves vertically beyond a defined threshold, it is considered to be falling.
 
+**How to Use**
+
+Fill out the parameters in *config* and start the script.
+
+Press `q' to exit.
+
+
 **TODO**
 
 - The COCO dataset used for training the YOLO model does not include a "stick" class. Possible alternatives:
