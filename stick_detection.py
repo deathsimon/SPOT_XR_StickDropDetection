@@ -34,12 +34,16 @@ class StickDetector:
         self.model = YOLO(self.yolo_model)
 
         # Initialize video capture
-        if self.rtsp_url:
+        if self.rtsp_url != '':
             self.cap = cv2.VideoCapture(self.rtsp_url)
+            print(f"Using RTSP URL: {self.rtsp_url}")
         else:
             self.cap = cv2.VideoCapture(self.camera_index)
+            print(f"Using Camera Index: {self.camera_index}")
         if not self.cap.isOpened():
             raise Exception(f"Error: Could not open video stream")
+        
+        cv2.namedWindow("Stick Detection", flags=cv2.WINDOW_GUI_NORMAL)
         
     def check_drop(self):        
         """Check if the stick has dropped based on Y-coordinate"""
@@ -124,7 +128,7 @@ class StickDetector:
                 # Perform detection and draw bounding box
                 frame = self.detect_stick(frame)
                 
-                # Display the frame
+                # Display the frame                
                 cv2.imshow("Stick Detection", frame)
 
                 # Check for quit key

@@ -24,6 +24,13 @@ opencv-python - Version: 4.11.0.86
 
 ultralytics - Version: 8.3.99
 
+**RTSP**
+
+- Download SimpleRTSP server: wget https://github.com/aler9/rtsp-simple-server/releases/download/v0.16.0/rtsp-simple-server_v0.16.0_linux_amd64.tar.gz
+- Extract and start the RTSP Server: RTSP_RTSPADDRESS=(YOUR IP):(YOUR PORT) ./rtsp-simple-server
+- Stream webamera: ffmpeg -i /dev/video* -rtsp_transport tcp -c:v libx264 -preset ultrafast -tune zerolatency -b:v 500k -c:a aac -strict experimental -f rtsp rtsp://(YOUR IP):(YOUR PORT)/live -v verbose
+- Update the rtsp_url in config to rtsp://(YOUR IP):(YOUR PORT)/live
+
 **TODO**
 
 - The COCO dataset used for training the YOLO model does not include a "stick" class. Possible alternatives:

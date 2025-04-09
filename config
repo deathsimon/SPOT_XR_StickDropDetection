@@ -1,6 +1,6 @@
 [Settings]
 # RTSP server address
-;  rtsp_url = 
+rtsp_url = rtsp://localhost:8554/live
 # Camera device index
 camera_index = 4
 # Pixel threshold for detecting a drop
