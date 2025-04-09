@@ -6,12 +6,23 @@ Its primary function is to detect a target stick in the video stream and trigger
 
 We utilize a YOLO v11m model to detect the stick's position. If the stick moves vertically beyond a defined threshold, it is considered to be falling.
 
+
 **How to Use**
 
 Fill out the parameters in *config* and start the script.
 
 Press `q' to exit.
 
+After detecting a fall, the script stops the detection. Press `d' to restart the detection.
+
+
+**Dependency**
+
+numpy - Version: 1.24.2
+
+opencv-python - Version: 4.11.0.86
+
+ultralytics - Version: 8.3.99
 
 **TODO**
 

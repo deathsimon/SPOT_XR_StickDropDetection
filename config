@@ -1,4 +1,6 @@
 [Settings]
+# RTSP server address
+;  rtsp_url = 
 # Camera device index
 camera_index = 4
 # Pixel threshold for detecting a drop
