@@ -11,3 +11,6 @@ target_class_id = 39
 yolo_model = yolo11n.pt
 # Print all the information (YOLO inference time, Y of the detected object, etc.)
 verbose = True
+# Send signal to the server when a drop is detected
+; IP = 
+; port =

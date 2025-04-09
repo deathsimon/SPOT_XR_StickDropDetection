@@ -3,6 +3,7 @@ from ultralytics import YOLO
 import configparser
 import time
 import threading
+from websockets.sync.client import connect
 
 class StickDetector:    
     def __init__(self, config_file="config"):
@@ -20,6 +21,8 @@ class StickDetector:
         self.target_class_id = int(config['Settings'].get('target_class_id', 39))   # Class ID to detect
         self.yolo_model = config['Settings'].get('yolo_model', 'yolo11n.pt')   # Path to YOLO model
         self.verbose = config.getboolean('Settings', 'verbose', fallback=False)  # Verbose output
+        self.target_IP = config['Settings'].get('IP', '') # IP address for signal
+        self.target_port = config['Settings'].get('port', '') # IP address for signal
         
         # Initialize shared variables
         self.frame = None  # Latest frame from RTSP
@@ -44,13 +47,21 @@ class StickDetector:
             raise Exception(f"Error: Could not open video stream")
         
         cv2.namedWindow("Stick Detection", flags=cv2.WINDOW_GUI_NORMAL)
+
+    def send_ws_signal(self, signal):
+        if self.target_IP == '' or self.target_port == '':
+            print("No target IP or port specified. Signal not sent.")
+            return
+        
+        with connect(f"ws://{self.target_IP}:{self.target_port}") as client:
+            client.send(signal.to_bytes(1, byteorder="big"))
         
     def check_drop(self):        
         """Check if the stick has dropped based on Y-coordinate"""
         if self.stick_detected and self.prev_y is not None: # Check if stick was detected
             if self.current_y - self.prev_y > self.drop_threshold:
                 print("Signal: Stick has dropped!")
-                # Send signal here (e.g., HTTP request, GPIO trigger)
+                self.send_ws_signal(0x2d) # Send signal
                 self.detecting = False  # Stop detection after drop
 
     def detect_stick(self, frame):
