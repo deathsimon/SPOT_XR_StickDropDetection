@@ -3,8 +3,11 @@
 ; rtsp_url = rtsp://localhost:8554/live
 # Camera device index
 camera_index = 4
-# Pixel threshold for detecting a drop
-drop_threshold = 1000
+# Method: 0 for MSE, 1 for SSIM
+fall_detection_method = 1
+# Threshold for detecting a drop
+MSE_threshold = 2000
+SSIM_threshold = 0.5
 # Print all the information (YOLO inference time, Y of the detected object, etc.)
 verbose = True
 # Send signal to the server when a drop is detected

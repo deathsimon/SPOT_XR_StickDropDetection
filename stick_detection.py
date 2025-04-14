@@ -3,6 +3,7 @@ import configparser
 import time
 import threading
 import numpy as np
+from skimage.metrics import structural_similarity as ssim
 from websockets.sync.client import connect
 
 
@@ -17,11 +18,15 @@ class StickDetector:
         
         # Read parameters from config
         self.rtsp_url = config['Settings'].get('rtsp_url', '')  # RTSP URL for the stream
-        self.camera_index = int(config['Settings'].get('camera_index', 0)) # Camera index if needed
-        self.drop_threshold = int(config['Settings'].get('drop_threshold', 100))    # Pixels        
+        self.camera_index = int(config['Settings'].get('camera_index', 0)) # Camera index if needed        
         self.verbose = config.getboolean('Settings', 'verbose', fallback=False)  # Verbose output
         self.target_IP = config['Settings'].get('IP', '') # IP address for signal
         self.target_port = config['Settings'].get('port', '') # IP address for signal
+        self.fall_detection = int(config['Settings'].get('fall_detection_method', 0)) # Fall detection method
+        if self.fall_detection == 0:
+            self.drop_threshold = int(config['Settings'].get('MSE_threshold', 1000))    # Pixels
+        else:
+            self.drop_threshold = float(config['Settings'].get('SSIM_threshold', 0.5))    # SSIM
         
         # Initialize shared variables
         self.frame = None  # Latest frame from RTSP
@@ -77,6 +82,16 @@ class StickDetector:
         with connect(f"ws://{self.target_IP}:{self.target_port}") as client:
             client.send(signal.to_bytes(1, byteorder="big"))
 
+    def compute_ssim(self, img1, img2):
+        """Compute SSIM between two images"""         
+        if img1.shape != img2.shape:
+            return -1.0
+        try:
+            score = ssim(img1, img2, channel_axis=-1, data_range=255)
+            return score
+        except ValueError:            
+            return -1.0  # Handle errors (e.g., empty images)    
+
     def compute_mse(self, img1, img2):
         """Compute mean squared error between two images"""
         if img1.shape != img2.shape:
@@ -97,19 +112,31 @@ class StickDetector:
         if current_aoi.size == 0 or current_aoi.shape != self.prev_aoi.shape:
             return
 
-        # Compute MSE
-        mse = self.compute_mse(current_aoi, self.prev_aoi)
-        if self.verbose:
-            print(f"Current AOI MSE: {mse:.2f}")
+        if self.fall_detection == 0:
+            # Compute MSE
+            changes = self.compute_mse(current_aoi, self.prev_aoi)
+            if self.verbose:
+                print(f"Current AOI MSE: {changes:.2f}")
+        else:
+            # Compute SSIM
+            changes = self.compute_ssim(current_aoi, self.prev_aoi)
+            if self.verbose:
+                print(f"Current AOI SSIM: {changes:.2f}")
+            if changes < 0:
+                print("Error: SSIM computation failed.")
+                return
+            else:
+                # Invert SSIM to get a change metric
+                changes = 1 - changes
         
         # Check if change exceeds threshold
-        if mse > self.drop_threshold:
+        if changes > self.drop_threshold:        
             print("Signal: Stick has dropped!")
             self.send_ws_signal(0x2d) # Send signal
             self.detecting = False  # Stop detection after drop
 
         # Update previous AOI
-        self.prev_aoi = current_aoi.copy()    
+        # self.prev_aoi = current_aoi.copy()    
 
     def capture_stream(self):
         """Thread to continuously capture frames from video stream"""
@@ -177,13 +204,14 @@ class StickDetector:
                 # Display the frame                
                 cv2.imshow("Stick Detection", frame)
 
-                # Check for quit key
-                if cv2.waitKey(1) & 0xFF == ord('q'):
+                
+                key = cv2.waitKey(5) & 0xFF
+                if key == ord('q'):
+                    # Check for quit key
                     self.running = False
-                    break
-
-                # Restart detection after pressing 'd'
-                if cv2.waitKey(1) & 0xFF == ord('d'):
+                    break                
+                elif key == ord('d'):
+                    # Restart detection after pressing 'd'
                     self.prev_aoi = None # Reset previous AOI
                     self.detecting = True
                     print("Detection restarted.")  

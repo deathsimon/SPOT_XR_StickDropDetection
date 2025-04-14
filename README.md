@@ -28,6 +28,8 @@ ultralytics - Version: 8.3.99
 
 websockets - Version: 13.1
 
+scikit-image - Version: 0.21.0
+
 **RTSP**
 
 - Download SimpleRTSP server: wget https://github.com/aler9/rtsp-simple-server/releases/download/v0.16.0/rtsp-simple-server_v0.16.0_linux_amd64.tar.gz
