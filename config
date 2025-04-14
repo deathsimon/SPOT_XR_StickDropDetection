@@ -1,14 +1,10 @@
 [Settings]
 # RTSP server address
-rtsp_url = rtsp://localhost:8554/live
+; rtsp_url = rtsp://localhost:8554/live
 # Camera device index
 camera_index = 4
 # Pixel threshold for detecting a drop
-drop_threshold = 50
-# Class ID to detect (e.g., 39 for "bottle" in COCO, 36 for "basketball bat")
-target_class_id = 39
-# Path to YOLO model file
-yolo_model = yolo11n.pt
+drop_threshold = 1000
 # Print all the information (YOLO inference time, Y of the detected object, etc.)
 verbose = True
 # Send signal to the server when a drop is detected
