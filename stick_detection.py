@@ -26,7 +26,7 @@ class StickDetector:
         if self.fall_detection == 0:
             self.drop_threshold = int(config['Settings'].get('MSE_threshold', 1000))    # Pixels
         else:
-            self.drop_threshold = float(config['Settings'].get('SSIM_threshold', 0.5))    # SSIM
+            self.drop_threshold = float(config['Settings'].get('SSIM_change_threshold', 0.5))    # SSIM
         
         # Initialize shared variables
         self.frame = None  # Latest frame from RTSP
@@ -119,15 +119,13 @@ class StickDetector:
                 print(f"Current AOI MSE: {changes:.2f}")
         else:
             # Compute SSIM
-            changes = self.compute_ssim(current_aoi, self.prev_aoi)
+            changes = 1.0 - self.compute_ssim(current_aoi, self.prev_aoi)
             if self.verbose:
-                print(f"Current AOI SSIM: {changes:.2f}")
-            if changes < 0:
+                print(f"Current AOI changes: {changes:.2f}")
+            if changes > 1.0:
+                # ssim < 0 indicates an error
                 print("Error: SSIM computation failed.")
-                return
-            else:
-                # Invert SSIM to get a change metric
-                changes = 1 - changes
+                return            
         
         # Check if change exceeds threshold
         if changes > self.drop_threshold:        
