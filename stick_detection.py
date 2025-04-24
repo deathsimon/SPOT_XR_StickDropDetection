@@ -182,8 +182,12 @@ class StickDetector:
                     x2, y2 = self.end_point
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
                 elif self.aoi:
-                    x, y, w, h = self.aoi
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                    x, y, w, h = self.aoi                    
+                    if self.detecting:
+                        aoi_color = (0, 255, 0)  # Green for detecting
+                    else:
+                        aoi_color = (0, 0, 255)  # Red for not detecting                    
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), aoi_color, 2)
                     
                 # Initialize prev_aoi with first valid AOI
                 if self.aoi and self.prev_aoi is None:
