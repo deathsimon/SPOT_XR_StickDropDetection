@@ -119,13 +119,15 @@ class StickDetector:
                 print(f"Current AOI MSE: {changes:.2f}")
         else:
             # Compute SSIM
-            changes = 1.0 - self.compute_ssim(current_aoi, self.prev_aoi)
-            if self.verbose:
-                print(f"Current AOI changes: {changes:.2f}")
-            if changes > 1.0:
-                # ssim < 0 indicates an error
+            changes = self.compute_ssim(current_aoi, self.prev_aoi)            
+            if changes < 0:
                 print("Error: SSIM computation failed.")
-                return            
+                return
+            else:
+                # Invert SSIM to get a change metric
+                changes = 1 - changes
+            if self.verbose:
+                print(f"Current AOI SSIM: {changes:.2f}")            
         
         # Check if change exceeds threshold
         if changes > self.drop_threshold:        
