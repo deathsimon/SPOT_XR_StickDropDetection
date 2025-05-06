@@ -74,6 +74,27 @@ class StickDetector:
                 self.prev_aoi = None  # Reset previous AOI for new selection
                 print("Starting Stick Detection...")
 
+    def draw_status_tag(self, frame, x, y, status_tag="", bg_color=(0,0,0)):
+        """Draw status tag above the AOI or at top-left corner"""
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.6
+        font_color = (255, 255, 255)  # White text
+        thickness = 1
+
+        # Get text size
+        (text_w, text_h), baseline = cv2.getTextSize(status_tag, font, font_scale, thickness)
+        
+        # Position: Above AOI if set, else top-left corner
+        text_x = x
+        text_y = max(y - text_h - 5, 5)  # 5 pixels above AOI, avoid top edge
+
+        # Draw background rectangle
+        cv2.rectangle(frame, (text_x, text_y - text_h), 
+                     (text_x + text_w, text_y + baseline), bg_color, -1)
+        # Draw text
+        cv2.putText(frame, status_tag, (text_x, text_y), font, font_scale, 
+                    font_color, thickness, cv2.LINE_AA)                
+
     def send_ws_signal(self, signal):
         if self.target_IP == '' or self.target_port == '':
             print("No target IP or port specified. Signal not sent.")
@@ -183,13 +204,17 @@ class StickDetector:
                     x1, y1 = self.start_point
                     x2, y2 = self.end_point
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                    self.draw_status_tag(frame, x1, y1, "Selecting", (255, 0, 0))
                 elif self.aoi:
                     x, y, w, h = self.aoi                    
                     if self.detecting:
                         aoi_color = (0, 255, 0)  # Green for detecting
+                        status_tag = "Detecting"
                     else:
-                        aoi_color = (0, 0, 255)  # Red for not detecting                    
+                        aoi_color = (0, 0, 255)  # Red for not detecting
+                        status_tag = "Suspend"
                     cv2.rectangle(frame, (x, y), (x+w, y+h), aoi_color, 2)
+                    self.draw_status_tag(frame, x, y, status_tag, aoi_color)
                     
                 # Initialize prev_aoi with first valid AOI
                 if self.aoi and self.prev_aoi is None:
