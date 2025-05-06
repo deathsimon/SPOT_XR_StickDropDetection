@@ -30,6 +30,8 @@ class StickDetector:
         
         # Initialize shared variables
         self.frame = None  # Latest frame from RTSP
+        self.frame_height = 0  # Frame dimensions
+        self.frame_width = 0
         self.running = False
         self.frame_lock = threading.Lock()  # Lock for thread-safe frame access
         self.detecting = False
@@ -54,10 +56,16 @@ class StickDetector:
         if event == cv2.EVENT_LBUTTONDOWN:
             self.detecting = False  # Stop detection while selecting AOI
             self.selecting_aoi = True
+            # Clamp coordinates to frame boundaries
+            x = max(0, min(x, self.frame_width - 1))
+            y = max(0, min(y, self.frame_height - 1))
             self.start_point = (x, y)
-            self.end_point = (x, y)
+            self.end_point = (x, y)            
         elif event == cv2.EVENT_MOUSEMOVE and self.selecting_aoi:
-            self.end_point = (x, y)
+            # Clamp coordinates to frame boundaries
+            x = max(0, min(x, self.frame_width - 1))
+            y = max(0, min(y, self.frame_height - 1))
+            self.end_point = (x, y)            
         elif event == cv2.EVENT_LBUTTONUP:
             self.selecting_aoi = False
             x1, y1 = self.start_point
@@ -67,6 +75,11 @@ class StickDetector:
             y = min(y1, y2)
             w = abs(x2 - x1)
             h = abs(y2 - y1)
+            # Clamp to frame boundaries
+            x = max(0, min(x, self.frame_width - w))
+            y = max(0, min(y, self.frame_height - h))
+            w = min(w, self.frame_width - x)
+            h = min(h, self.frame_height - y)
             if w > 0 and h > 0:
                 self.aoi = (x, y, w, h)
                 print(f"AOI selected: x={x}, y={y}, w={w}, h={h}")
@@ -171,6 +184,7 @@ class StickDetector:
             # Update shared frame with thread-safe access
             with self.frame_lock:
                 self.frame = frame
+                self.frame_height, self.frame_width = frame.shape[:2]
 
             # Small sleep to prevent excessive CPU usage (adjust as needed)
             time.sleep(0.001)  # 1 ms
