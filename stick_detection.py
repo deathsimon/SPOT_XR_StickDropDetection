@@ -49,7 +49,12 @@ class StickDetector:
             self.cap = cv2.VideoCapture(self.camera_index)
             print(f"Using Camera Index: {self.camera_index}")
         if not self.cap.isOpened():
-            raise Exception(f"Error: Could not open video stream")                
+            raise Exception(f"Error: Could not open video stream")
+        
+        # Set up link to target IP and port
+        self.connection = self.establish_link() # Establish WebSocket link
+        if self.connection:
+            print(f"WebSocket link established to {self.target_IP}:{self.target_port}")        
 
     def mouse_callback(self, event, x, y, flags, param):
         """Handle mouse events for AOI selection"""
@@ -107,14 +112,28 @@ class StickDetector:
         # Draw text
         cv2.putText(frame, status_tag, (text_x, text_y), font, font_scale, 
                     font_color, thickness, cv2.LINE_AA)                
+        
+    def establish_link(self):
+        """Establish WebSocket link to target IP and port"""
+        connection = None
+        if self.target_IP == '' or self.target_port == '':
+            print("No target IP or port specified. Link not established.")
+        else:
+            connection = connect(f"ws://{self.target_IP}:{self.target_port}")
+        
+        return connection
 
     def send_ws_signal(self, signal):
-        if self.target_IP == '' or self.target_port == '':
-            print("No target IP or port specified. Signal not sent.")
-            return
-        
-        with connect(f"ws://{self.target_IP}:{self.target_port}") as client:
-            client.send(signal.to_bytes(1, byteorder="big"))
+        """Send signal to target IP and port via WebSocket"""
+        if self.connection is None:
+            print("No WebSocket connection established.")            
+        else:
+            try:
+                self.connection.send(signal.to_bytes(1, byteorder="big"))
+            except Exception as e:
+                print(f"Error sending signal: {e}")
+            else:    
+                print(f"Signal {signal} sent to {self.target_IP}:{self.target_port}")        
 
     def compute_ssim(self, img1, img2):
         """Compute SSIM between two images"""         
@@ -164,8 +183,8 @@ class StickDetector:
                 print(f"Current AOI SSIM: {changes:.2f}")            
         
         # Check if change exceeds threshold
-        if changes > self.drop_threshold:        
-            print("Signal: Stick has dropped!")
+        if changes > self.drop_threshold:
+            print("[" + str(time.time_ns()) +"] Signal: Stick has dropped!")
             self.send_ws_signal(0x2d) # Send signal
             self.detecting = False  # Stop detection after drop
 
