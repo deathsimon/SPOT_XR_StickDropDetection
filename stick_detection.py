@@ -271,6 +271,7 @@ class StickDetector:
                 if key == ord('q'):
                     # Check for quit key
                     self.running = False
+                    video_thread.join()  # Wait for thread to finish
                     break                
                 elif key == ord('d'):
                     # Restart detection after pressing 'd'
