@@ -6,7 +6,6 @@ import numpy as np
 from skimage.metrics import structural_similarity as ssim
 from websockets.sync.client import connect
 
-
 class StickDetector:    
     def __init__(self, config_file="config"):
         # Load configuration
@@ -54,7 +53,15 @@ class StickDetector:
         # Set up link to target IP and port
         self.connection = self.establish_link() # Establish WebSocket link
         if self.connection:
-            print(f"WebSocket link established to {self.target_IP}:{self.target_port}")        
+            print(f"WebSocket link established to {self.target_IP}:{self.target_port}")
+
+        # Initialize the connection to Spot Arm
+        from Spot_arm import SpotArm
+        try:
+            self.spot_arm = SpotArm()
+        except ConnectionError as e:
+            print(f"Warning: {e}")
+            self.spot_arm = None
 
     def mouse_callback(self, event, x, y, flags, param):
         """Handle mouse events for AOI selection"""
@@ -126,7 +133,7 @@ class StickDetector:
     def send_ws_signal(self, signal):
         """Send signal to target IP and port via WebSocket"""
         if self.connection is None:
-            print("No WebSocket connection established.")            
+            print("Warning: No WebSocket connection established.")            
         else:
             try:
                 self.connection.send(signal.to_bytes(1, byteorder="big"))
@@ -277,7 +284,18 @@ class StickDetector:
                     # Restart detection after pressing 'd'
                     self.prev_aoi = None # Reset previous AOI
                     self.detecting = True
-                    print("Detection restarted.")  
+                    print("Detection restarted.")
+                elif key == ord('r'):  
+                    # Reset Spot Arm
+                    if self.spot_arm != None:
+                        self.spot_arm.stand()
+                        self.spot_arm.open_gripper_at_angle(27)
+                        self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
+                        self.spot_arm.set_arm_velocity(0.0, 0.2, 0.0) # nudge left
+                        self.spot_arm.set_arm_velocity(0.0, -0.2, 0.0) # nudge right
+                        print("Spot Arm to default position.")
+                    else:
+                        print("Warning: Spot Arm not initialized.")
 
         except KeyboardInterrupt:
             print("Stopped by user.")
