@@ -1,16 +1,17 @@
-# import websocket as ws
-from websockets.sync.client import connect
+import websocket as ws
+# from websockets.sync.client import connect
 import struct
 
 from ApiManager import ApiRequests
 
 class SpotArm:
-    def __init__(self):
+    def __init__(self, target_IP="0.0.0.0", target_port="8888"):
+        """Establish WebSocket link to target IP and port"""
         try:
-            # self.client = ws.create_connection("ws://0.0.0.0:8888/")
-            self.client = connect(f"ws://0.0.0.0:8888/")
+            self.client = ws.create_connection(f"ws://{self.target_IP}:{self.target_port}/")
+            # self.client = connect(f"ws://0.0.0.0:8888/")
         except Exception as e:
-            # Handle the exception if the connection fails            
+            # Handle the exception if the connection fails
             self.client = None
             raise ConnectionError("Could not connect to Spot.")
     
@@ -46,6 +47,11 @@ class SpotArm:
     def sit(self):
         self.client.send_binary(
             ApiRequests("STAND").id.to_bytes(1, "big")
+            )
+
+    def arm_stow(self):
+        self.client.send_binary(
+            ApiRequests("ARM_STOW").id.to_bytes(1, "big")
             )
         
     def set_arm_joints(self, sh0, sh1, el0, el1, wr0, wr1):

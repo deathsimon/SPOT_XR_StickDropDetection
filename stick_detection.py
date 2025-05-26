@@ -4,7 +4,7 @@ import time
 import threading
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
-from websockets.sync.client import connect
+# from websockets.sync.client import connect
 
 class StickDetector:    
     def __init__(self, config_file="config"):
@@ -51,14 +51,14 @@ class StickDetector:
             raise Exception(f"Error: Could not open video stream")
         
         # Set up link to target IP and port
-        self.connection = self.establish_link() # Establish WebSocket link
-        if self.connection:
-            print(f"WebSocket link established to {self.target_IP}:{self.target_port}")
+        # self.connection = self.establish_link() # Establish WebSocket link
+        # if self.connection:
+        #     print(f"WebSocket link established to {self.target_IP}:{self.target_port}")
 
         # Initialize the connection to Spot Arm
         from Spot_arm import SpotArm
         try:
-            self.spot_arm = SpotArm()
+            self.spot_arm = SpotArm(self.target_IP, self.target_port)
         except ConnectionError as e:
             print(f"Warning: {e}")
             self.spot_arm = None
@@ -120,27 +120,27 @@ class StickDetector:
         cv2.putText(frame, status_tag, (text_x, text_y), font, font_scale, 
                     font_color, thickness, cv2.LINE_AA)                
         
-    def establish_link(self):
-        """Establish WebSocket link to target IP and port"""
-        connection = None
-        if self.target_IP == '' or self.target_port == '':
-            print("No target IP or port specified. Link not established.")
-        else:
-            connection = connect(f"ws://{self.target_IP}:{self.target_port}")
+    # def establish_link(self):
+    #     """Establish WebSocket link to target IP and port"""
+    #     connection = None
+    #     if self.target_IP == '' or self.target_port == '':
+    #         print("No target IP or port specified. Link not established.")
+    #     else:
+    #         connection = connect(f"ws://{self.target_IP}:{self.target_port}")
         
-        return connection
+    #     return connection
 
-    def send_ws_signal(self, signal):
-        """Send signal to target IP and port via WebSocket"""
-        if self.connection is None:
-            print("Warning: No WebSocket connection established.")            
-        else:
-            try:
-                self.connection.send(signal.to_bytes(1, byteorder="big"))
-            except Exception as e:
-                print(f"Error sending signal: {e}")
-            else:    
-                print(f"Signal {signal} sent to {self.target_IP}:{self.target_port}")        
+    # def send_ws_signal(self, signal):
+    #     """Send signal to target IP and port via WebSocket"""
+    #     if self.connection is None:
+    #         print("Warning: No WebSocket connection established.")            
+    #     else:
+    #         try:
+    #             self.connection.send(signal.to_bytes(1, byteorder="big"))
+    #         except Exception as e:
+    #             print(f"Error sending signal: {e}")
+    #         else:    
+    #             print(f"Signal {signal} sent to {self.target_IP}:{self.target_port}")        
 
     def compute_ssim(self, img1, img2):
         """Compute SSIM between two images"""         
@@ -192,7 +192,11 @@ class StickDetector:
         # Check if change exceeds threshold
         if changes > self.drop_threshold:
             print("[" + str(time.time_ns()) +"] Signal: Stick has dropped!")
-            self.send_ws_signal(0x2d) # Send signal
+            if self.spot_arm is not None:
+                self.spot_arm.close_gripper()  # Close gripper
+                print("Spot: Arm gripper closed.")
+                print("Did Spot catch the stick?")
+            # self.send_ws_signal(0x2d) # Send signal
             self.detecting = False  # Stop detection after drop
 
         # Update previous AOI
@@ -277,7 +281,7 @@ class StickDetector:
                 key = cv2.waitKey(5) & 0xFF
                 if key == ord('q'):
                     # Check for quit key
-                    self.running = False
+                    self.running = False                    
                     video_thread.join()  # Wait for thread to finish
                     break                
                 elif key == ord('d'):
@@ -285,17 +289,32 @@ class StickDetector:
                     self.prev_aoi = None # Reset previous AOI
                     self.detecting = True
                     print("Detection restarted.")
-                elif key == ord('r'):  
+                elif key == ord('r'):
                     # Reset Spot Arm
                     if self.spot_arm != None:
                         self.spot_arm.stand()
                         self.spot_arm.open_gripper_at_angle(27)
                         self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
-                        self.spot_arm.set_arm_velocity(0.0, 0.2, 0.0) # nudge left
-                        self.spot_arm.set_arm_velocity(0.0, -0.2, 0.0) # nudge right
-                        print("Spot Arm to default position.")
+                        # self.spot_arm.set_arm_velocity(0.0, 0.2, 0.0) # nudge left
+                        # self.spot_arm.set_arm_velocity(0.0, -0.2, 0.0) # nudge right
+                        print("Spot: Arm to default position.")
                     else:
                         print("Warning: Spot Arm not initialized.")
+                elif key == ord('o'):
+                    if self.spot_arm != None:
+                        self.spot_arm.open_gripper()
+                        print("Spot: Arm gripper opened.")
+                elif key == ord('s'):
+                    if self.spot_arm != None:
+                        self.spot_arm.close_gripper()
+                        self.spot_arm.arm_stow()
+                        self.spot_arm.sit()
+                        print("Spot: Arm stowed and sitting.")
+                elif key == ord('c'):
+                    if self.spot_arm != None:
+                        self.spot_arm.close_gripper()
+                        print("Spot: Arm gripper closed.")
+
 
         except KeyboardInterrupt:
             print("Stopped by user.")

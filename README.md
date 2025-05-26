@@ -17,6 +17,13 @@ Press `q' to exit.
 
 After detecting a fall, the script stops the detection. Press `d' or draw a new AOI to restart the detection.
 
+Other commands for Spot:
+
+-- 'r': reset to the default setting for catching
+-- 'o': open the gripper
+-- 'c': close the gripper
+-- 's': stow the arm and sit down
+
 
 **Dependency**
 
