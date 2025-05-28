@@ -4,9 +4,6 @@ import time
 import threading
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
-import rclpy
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
 
 class StickDetector:    
     def __init__(self, config_file="config"):
@@ -19,13 +16,7 @@ class StickDetector:
         
         # Read parameters from config
         self.video_source = config['Settings'].get('video_source', '')
-        if self.video_source == 'RTSP':
-            self.rtsp_url = config['Settings'].get('rtsp_url', '')  # RTSP URL for the stream
-        elif self.video_source == 'Camera':
-            self.camera_index = int(config['Settings'].get('camera_index', 0)) # Camera index if needed
-        elif self.video_source == 'ROS2':
-            self.video_topic = config['Settings'].get('video_topic', '')  # ROS2 topic for the stream
-        else:
+        if self.video_source not in ['RTSP', 'Camera', 'ROS2']:
             raise Exception(f"Error: Invalid video source '{self.video_source}' in {config_file}")
                     
         self.verbose = config.getboolean('Settings', 'verbose', fallback=False)  # Verbose output
@@ -51,16 +42,20 @@ class StickDetector:
         self.end_point = None  # For mouse drawing
         
         # Initialize video capture
-        if self.video_source == 'RTSP':        
+        if self.video_source == 'RTSP':
+            self.rtsp_url = config['Settings'].get('rtsp_url', '')  # RTSP URL for the stream
             self.cap = cv2.VideoCapture(self.rtsp_url)
             print(f"Using RTSP URL: {self.rtsp_url}")            
         elif self.video_source == 'Camera':
+            self.camera_index = int(config['Settings'].get('camera_index', 0)) # Camera index if needed
             self.cap = cv2.VideoCapture(self.camera_index)
             print(f"Using Camera Index: {self.camera_index}")
         elif self.video_source == 'ROS2':
+            import rclpy
             rclpy.init()
-            self.bridge = CvBridge()
-            self.cap = None        
+            from ros2_video_source import ROS2VideoSource            
+            video_topic = config['Settings'].get('video_topic', '')  # ROS2 topic for the stream
+            self.video_stream = ROS2VideoSource(video_topic)            
                         
         if self.video_source != 'ROS2' and not self.cap.isOpened():
             raise Exception(f"Error: Could not open video stream")        
@@ -214,37 +209,13 @@ class StickDetector:
             # Small sleep to prevent excessive CPU usage (adjust as needed)
             time.sleep(0.001)  # 1 ms
 
-    def image_callback(self, msg):
-        """Callback to handle incoming ROS 2 image messages"""
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            with self.frame_lock:
-                self.frame = cv_image
-                self.frame_height, self.frame_width = cv_image.shape[:2]
-        except Exception as e:
-            print(f"Error converting ROS Image to OpenCV: {e}")
-
-    def subscribe_ros_topic(self):
-        """Thread to subscribe to ROS 2 image topic"""
-        node = rclpy.create_node('image_subscriber')
-        subscription = node.create_subscription(
-            Image,
-            self.image_topic,
-            self.image_callback,
-            10)  # QoS profile depth of 10
-        rclpy.spin(node)  # Spin the node to process messages
-        node.destroy_node()  # Cleanup when spinning stops
-
     def run(self):
         """Main thread: Perform pixel change detection and display"""        
         self.running = True
         # self.detecting = True
         # print("Starting Stick Detection...")
         
-        if self.video_source == 'ROS2':
-            ros_thread = threading.Thread(target=self.subscribe_ros_topic, daemon=True)
-            ros_thread.start()
-        else:
+        if self.video_source != 'ROS2':            
             # Start RTSP/Camera capture thread
             video_thread = threading.Thread(target=self.capture_stream, daemon=True)
             video_thread.start()
@@ -257,11 +228,13 @@ class StickDetector:
         try:
             while self.running:
                 # Get the latest frame
-                with self.frame_lock:
-                    if self.frame is None:
-                        continue  # Skip if no frame yet
-                    frame = self.frame.copy()  # Work on a copy
-
+                if self.video_source == 'ROS2':
+                    frame = self.video_stream.get_frame()
+                else:
+                    with self.frame_lock:
+                        if self.frame is None:
+                            continue  # Skip if no frame yet
+                        frame = self.frame.copy()  # Work on a copy            
                 
                 # Draw AOI rectangle if selecting or selected
                 if self.selecting_aoi and self.start_point and self.end_point:
@@ -333,14 +306,18 @@ class StickDetector:
                         self.spot_arm.close_gripper()
                         print("Spot: Arm gripper closed.")
 
-
         except KeyboardInterrupt:
             print("Stopped by user.")
             self.running = False
 
         # Cleanup
-        finally:
-            self.cap.release()
+        finally:            
+            if self.video_type == "ros2":
+                self.video_source.release()
+                import rclpy
+                rclpy.shutdown()
+            else:
+                self.cap.release()
             cv2.destroyAllWindows()
 
 if __name__ == "__main__":
