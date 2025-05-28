@@ -120,6 +120,13 @@ class StickDetector:
         cv2.putText(frame, status_tag, (text_x, text_y), font, font_scale, 
                     font_color, thickness, cv2.LINE_AA)                
         
+    
+    def check_connection(self):
+        if self.spot_arm is None:
+            print("Warning: Action not performed. Spot Arm not initialized.")
+            return False
+        return True
+    
     # def establish_link(self):
     #     """Establish WebSocket link to target IP and port"""
     #     connection = None
@@ -290,28 +297,26 @@ class StickDetector:
                     self.detecting = True
                     print("Detection restarted.")
                 elif key == ord('r'):
-                    # Reset Spot Arm
-                    if self.spot_arm != None:
+                    # Reset Spot Arm                    
+                    if self.check_connection() is True:
                         self.spot_arm.stand()
                         self.spot_arm.open_gripper_at_angle(27)
                         self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
                         # self.spot_arm.set_arm_velocity(0.0, 0.2, 0.0) # nudge left
                         # self.spot_arm.set_arm_velocity(0.0, -0.2, 0.0) # nudge right
-                        print("Spot: Arm to default position.")
-                    else:
-                        print("Warning: Spot Arm not initialized.")
+                        print("Spot: Arm to default position.")                    
                 elif key == ord('o'):
-                    if self.spot_arm != None:
+                    if self.check_connection() is True:
                         self.spot_arm.open_gripper()
                         print("Spot: Arm gripper opened.")
                 elif key == ord('s'):
-                    if self.spot_arm != None:
+                    if self.check_connection() is True:
                         self.spot_arm.close_gripper()
                         self.spot_arm.arm_stow()
                         self.spot_arm.sit()
                         print("Spot: Arm stowed and sitting.")
                 elif key == ord('c'):
-                    if self.spot_arm != None:
+                    if self.check_connection() is True:
                         self.spot_arm.close_gripper()
                         print("Spot: Arm gripper closed.")
 
