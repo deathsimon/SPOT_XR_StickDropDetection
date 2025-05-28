@@ -211,9 +211,7 @@ class StickDetector:
 
     def run(self):
         """Main thread: Perform pixel change detection and display"""        
-        self.running = True
-        # self.detecting = True
-        # print("Starting Stick Detection...")
+        self.running = True        
         
         if self.video_source != 'ROS2':            
             # Start RTSP/Camera capture thread
@@ -230,6 +228,7 @@ class StickDetector:
                 # Get the latest frame
                 if self.video_source == 'ROS2':
                     frame = self.video_stream.get_frame()
+                    self.frame_height, self.frame_width = frame.shape[:2]
                 else:
                     with self.frame_lock:
                         if self.frame is None:
@@ -312,7 +311,7 @@ class StickDetector:
 
         # Cleanup
         finally:            
-            if self.video_type == "ros2":
+            if self.video_source == "ROS2":
                 self.video_source.release()
                 import rclpy
                 rclpy.shutdown()
