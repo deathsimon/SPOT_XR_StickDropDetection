@@ -8,7 +8,7 @@ class SpotArm:
     def __init__(self, target_IP="0.0.0.0", target_port="8888"):
         """Establish WebSocket link to target IP and port"""
         try:
-            self.client = ws.create_connection(f"ws://{self.target_IP}:{self.target_port}/")
+            self.client = ws.create_connection(f"ws://{target_IP}:{target_port}/")
             # self.client = connect(f"ws://0.0.0.0:8888/")
         except Exception as e:
             # Handle the exception if the connection fails
@@ -46,7 +46,7 @@ class SpotArm:
     
     def sit(self):
         self.client.send_binary(
-            ApiRequests("STAND").id.to_bytes(1, "big")
+            ApiRequests("SIT").id.to_bytes(1, "big")
             )
 
     def arm_stow(self):
