@@ -4,7 +4,9 @@ import time
 import threading
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
-# from websockets.sync.client import connect
+import rclpy
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
 
 class StickDetector:    
     def __init__(self, config_file="config"):
@@ -16,8 +18,16 @@ class StickDetector:
             raise Exception(f"Error: 'Settings' section not found in {config_file}")
         
         # Read parameters from config
-        self.rtsp_url = config['Settings'].get('rtsp_url', '')  # RTSP URL for the stream
-        self.camera_index = int(config['Settings'].get('camera_index', 0)) # Camera index if needed        
+        self.video_source = config['Settings'].get('video_source', '')
+        if self.video_source == 'RTSP':
+            self.rtsp_url = config['Settings'].get('rtsp_url', '')  # RTSP URL for the stream
+        elif self.video_source == 'Camera':
+            self.camera_index = int(config['Settings'].get('camera_index', 0)) # Camera index if needed
+        elif self.video_source == 'ROS2':
+            self.video_topic = config['Settings'].get('video_topic', '')  # ROS2 topic for the stream
+        else:
+            raise Exception(f"Error: Invalid video source '{self.video_source}' in {config_file}")
+                    
         self.verbose = config.getboolean('Settings', 'verbose', fallback=False)  # Verbose output
         self.target_IP = config['Settings'].get('IP', '') # IP address for signal
         self.target_port = config['Settings'].get('port', '') # IP address for signal
@@ -28,7 +38,7 @@ class StickDetector:
             self.drop_threshold = float(config['Settings'].get('SSIM_change_threshold', 0.5))    # SSIM
         
         # Initialize shared variables
-        self.frame = None  # Latest frame from RTSP
+        self.frame = None  # Latest frame from video stream
         self.frame_height = 0  # Frame dimensions
         self.frame_width = 0
         self.running = False
@@ -41,21 +51,21 @@ class StickDetector:
         self.end_point = None  # For mouse drawing
         
         # Initialize video capture
-        if self.rtsp_url != '':
+        if self.video_source == 'RTSP':        
             self.cap = cv2.VideoCapture(self.rtsp_url)
-            print(f"Using RTSP URL: {self.rtsp_url}")
-        else:
+            print(f"Using RTSP URL: {self.rtsp_url}")            
+        elif self.video_source == 'Camera':
             self.cap = cv2.VideoCapture(self.camera_index)
             print(f"Using Camera Index: {self.camera_index}")
-        if not self.cap.isOpened():
-            raise Exception(f"Error: Could not open video stream")
+        elif self.video_source == 'ROS2':
+            rclpy.init()
+            self.bridge = CvBridge()
+            self.cap = None        
+                        
+        if self.video_source != 'ROS2' and not self.cap.isOpened():
+            raise Exception(f"Error: Could not open video stream")        
         
-        # Set up link to target IP and port
-        # self.connection = self.establish_link() # Establish WebSocket link
-        # if self.connection:
-        #     print(f"WebSocket link established to {self.target_IP}:{self.target_port}")
-
-        # Initialize the connection to Spot Arm
+        # Set up link to Spot Arm via ROS2 client using target IP and port        
         from Spot_arm import SpotArm
         try:
             self.spot_arm = SpotArm(self.target_IP, self.target_port)
@@ -125,29 +135,7 @@ class StickDetector:
         if self.spot_arm is None:
             print("Warning: Action not performed. Spot Arm not initialized.")
             return False
-        return True
-    
-    # def establish_link(self):
-    #     """Establish WebSocket link to target IP and port"""
-    #     connection = None
-    #     if self.target_IP == '' or self.target_port == '':
-    #         print("No target IP or port specified. Link not established.")
-    #     else:
-    #         connection = connect(f"ws://{self.target_IP}:{self.target_port}")
-        
-    #     return connection
-
-    # def send_ws_signal(self, signal):
-    #     """Send signal to target IP and port via WebSocket"""
-    #     if self.connection is None:
-    #         print("Warning: No WebSocket connection established.")            
-    #     else:
-    #         try:
-    #             self.connection.send(signal.to_bytes(1, byteorder="big"))
-    #         except Exception as e:
-    #             print(f"Error sending signal: {e}")
-    #         else:    
-    #             print(f"Signal {signal} sent to {self.target_IP}:{self.target_port}")        
+        return True               
 
     def compute_ssim(self, img1, img2):
         """Compute SSIM between two images"""         
@@ -226,15 +214,40 @@ class StickDetector:
             # Small sleep to prevent excessive CPU usage (adjust as needed)
             time.sleep(0.001)  # 1 ms
 
+    def image_callback(self, msg):
+        """Callback to handle incoming ROS 2 image messages"""
+        try:
+            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            with self.frame_lock:
+                self.frame = cv_image
+                self.frame_height, self.frame_width = cv_image.shape[:2]
+        except Exception as e:
+            print(f"Error converting ROS Image to OpenCV: {e}")
+
+    def subscribe_ros_topic(self):
+        """Thread to subscribe to ROS 2 image topic"""
+        node = rclpy.create_node('image_subscriber')
+        subscription = node.create_subscription(
+            Image,
+            self.image_topic,
+            self.image_callback,
+            10)  # QoS profile depth of 10
+        rclpy.spin(node)  # Spin the node to process messages
+        node.destroy_node()  # Cleanup when spinning stops
+
     def run(self):
         """Main thread: Perform pixel change detection and display"""        
         self.running = True
         # self.detecting = True
         # print("Starting Stick Detection...")
         
-        # Start RTSP capture thread
-        video_thread = threading.Thread(target=self.capture_stream, daemon=True)
-        video_thread.start()
+        if self.video_source == 'ROS2':
+            ros_thread = threading.Thread(target=self.subscribe_ros_topic, daemon=True)
+            ros_thread.start()
+        else:
+            # Start RTSP/Camera capture thread
+            video_thread = threading.Thread(target=self.capture_stream, daemon=True)
+            video_thread.start()
 
         # Set up window and mouse callback for AOI selection        
         cv2.namedWindow("Stick Detection", flags=cv2.WINDOW_GUI_NORMAL)

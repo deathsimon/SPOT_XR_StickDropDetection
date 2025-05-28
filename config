@@ -1,8 +1,12 @@
 [Settings]
+# Video source: 'ROS2' for ROS2 topic, 'RTSP' for RTSP stream, or 'Camera' for local camera
+video_source = 'Camera'
 # RTSP server address
 ; rtsp_url = rtsp://localhost:8554/live
 # Camera device index
 camera_index = 4
+# ROS2 topic for video stream
+; ros2_topic = '/camera/image_raw'
 # Method: 0 for MSE, 1 for SSIM
 fall_detection_method = 1
 # Threshold for detecting a drop
