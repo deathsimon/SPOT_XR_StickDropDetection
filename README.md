@@ -32,12 +32,12 @@ Its job is to detect when a stick begins to fall in a live video stream and comm
 6. **Exit the Script**
    Press `q' to exit.
 
-Other commands for Spot:
+***Other commands for Spot:***
 
--- 'r': reset to the default setting for catching
--- 'o': open the gripper
--- 'c': close the gripper
--- 's': stow the arm and sit down
+- 'r': reset to the default setting for catching
+- 'o': open the gripper
+- 'c': close the gripper
+- 's': stow the arm and sit down
 
 ### Dependency
 
