@@ -1,8 +1,8 @@
 [Settings]
 # Video source: 'ROS2' for ROS2 topic, 'RTSP' for RTSP stream, or 'Camera' for local camera
-video_source = Camera
+video_source = RTSP
 # RTSP server address
-; rtsp_url = rtsp://localhost:8554/live
+rtsp_url = rtsp://localhost:8554/live
 # Camera device index
 camera_index = 4
 # ROS2 topic for video stream
