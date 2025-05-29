@@ -47,17 +47,18 @@ class StickDetector:
             self.cap = cv2.VideoCapture(self.rtsp_url)
             print(f"Using RTSP URL: {self.rtsp_url}")            
         elif self.video_source == 'Camera':
-            self.camera_index = int(config['Settings'].get('camera_index', 0)) # Camera index if needed
-            self.cap = cv2.VideoCapture(self.camera_index)
-            print(f"Using Camera Index: {self.camera_index}")
+            camera_index = int(config['Settings'].get('camera_index', 0)) # Camera index if needed
+            from video_source_camera import CameraVideoSource
+            self.video_stream = CameraVideoSource(camera_index)            
+            print(f"Using Camera Index: {camera_index}")
         elif self.video_source == 'ROS2':
             import rclpy
             rclpy.init()
-            from ros2_video_source import ROS2VideoSource            
+            from video_source_ros2 import ROS2VideoSource            
             video_topic = config['Settings'].get('video_topic', '')  # ROS2 topic for the stream
             self.video_stream = ROS2VideoSource(video_topic)            
                         
-        if self.video_source != 'ROS2' and not self.cap.isOpened():
+        if self.video_source == 'RTSP' and not self.cap.isOpened():
             raise Exception(f"Error: Could not open video stream")        
         
         # Set up link to Spot Arm via ROS2 client using target IP and port        
@@ -213,8 +214,8 @@ class StickDetector:
         """Main thread: Perform pixel change detection and display"""        
         self.running = True        
         
-        if self.video_source != 'ROS2':            
-            # Start RTSP/Camera capture thread
+        if self.video_source == 'RTSP':            
+            # Start RTSP capture thread
             video_thread = threading.Thread(target=self.capture_stream, daemon=True)
             video_thread.start()
 
@@ -226,9 +227,12 @@ class StickDetector:
         try:
             while self.running:
                 # Get the latest frame
-                if self.video_source == 'ROS2':
+                if self.video_source == 'ROS2' or self.video_source == 'Camera':
                     frame = self.video_stream.get_frame()
-                    self.frame_height, self.frame_width = frame.shape[:2]
+                    if frame is not None:
+                        self.frame_height, self.frame_width = frame.shape[:2]
+                    else:
+                        continue  # Skip if no frame yet
                 else:
                     with self.frame_lock:
                         if self.frame is None:
@@ -273,8 +277,9 @@ class StickDetector:
                 key = cv2.waitKey(5) & 0xFF
                 if key == ord('q'):
                     # Check for quit key
-                    self.running = False                    
-                    video_thread.join()  # Wait for thread to finish
+                    self.running = False
+                    if self.video_source == 'RTSP':
+                        video_thread.join()  # Wait for thread to finish
                     break                
                 elif key == ord('d'):
                     # Restart detection after pressing 'd'
@@ -315,8 +320,10 @@ class StickDetector:
                 self.video_source.release()
                 import rclpy
                 rclpy.shutdown()
-            else:
+            elif self.video_source == "RTSP":
                 self.cap.release()
+            elif self.video_source == "Camera":
+                self.video_stream.release()
             cv2.destroyAllWindows()
 
 if __name__ == "__main__":
