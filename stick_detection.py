@@ -251,6 +251,9 @@ class StickDetector:
                     break
                 elif key == ord('d'):
                     # Restart detection after pressing 'd'
+                    if self.aoi is None:
+                        print("Error: No AOI selected. Please select an AOI first.")
+                        continue
                     self.prev_aoi = None # Reset previous AOI
                     self.detecting = True
                     print("Detection restarted.")

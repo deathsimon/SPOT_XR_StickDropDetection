@@ -3,7 +3,7 @@ import cv2
 
 class CameraVideoSource:
     def __init__(self, camera_index=0):
-        # super().__init__('video_source_node')        
+        """Initialize the video source from a camera."""             
         self.capture = cv2.VideoCapture(camera_index)
         
         if not self.capture.isOpened():
@@ -25,7 +25,7 @@ class CameraVideoSource:
                 with self.frame_lock:
                     self.frame = frame
             else:
-                self.get_logger().error("Failed to capture frame from camera.")
+                print("Failed to capture frame from camera.")
 
     def get_frame(self):
         """Return a copy of the latest frame."""
@@ -37,4 +37,4 @@ class CameraVideoSource:
         self.running = False
         self.capture_thread.join()
         if self.capture.isOpened():
-            self.capture.release()        
+            self.capture.release()
