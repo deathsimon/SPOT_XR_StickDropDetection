@@ -179,8 +179,8 @@ class StickDetector:
         
         # Check if change exceeds threshold
         if changes > self.drop_threshold:
-            print("[" + str(time.time_ns()) +"] Signal: Stick has dropped!")
-            if self.spot_arm is not None:
+            print("Stick has dropped!")
+            if self.check_connection() is True:
                 self.spot_arm.close_gripper()  # Close gripper
                 print("Spot: Arm gripper closed.")
                 print("Did Spot catch the stick?")
@@ -287,7 +287,7 @@ class StickDetector:
 
         # Cleanup
         finally:
-            self.video_source.release()            
+            self.video_stream.release()            
             if self.video_source == "ROS2":
                 import rclpy
                 rclpy.shutdown()
