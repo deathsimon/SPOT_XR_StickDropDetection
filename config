@@ -6,12 +6,13 @@ rtsp_url = rtsp://localhost:8554/live
 # Camera device index
 camera_index = 4
 # ROS2 topic for video stream
-; ros2_topic = '/camera/image_raw'
+# '/theta/image_raw' or '/theta/image/compressed'
+ros2_topic = /camera/image/compressed
 # Method: 0 for MSE, 1 for SSIM
-fall_detection_method = 1
+fall_detection_method = 0
 # Threshold for detecting a drop
 MSE_threshold = 250
-SSIM_change_threshold = 0.4
+SSIM_change_threshold = 0.2
 # Print all the information (YOLO inference time, Y of the detected object, etc.)
 verbose = True
 # Send signal to the server when a drop is detected

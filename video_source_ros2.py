@@ -3,7 +3,8 @@ import cv2
 from cv_bridge import CvBridge
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, Duration
+from sensor_msgs.msg import CompressedImage, Image
 
 class ROS2VideoSource(Node):
     def __init__(self, topic):
@@ -12,10 +13,21 @@ class ROS2VideoSource(Node):
         self.frame = None
         self.frame_lock = threading.Lock()
         self.running = True
+        self.compressed = True  # Set to True for CompressedImage, False for Image
+
+        qos_profile = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1            
+        )
 
         # Subscribe to the ROS2 topic
-        self.subscription = self.create_subscription(
-            Image, topic, self.image_callback, 10)
+        if self.compressed:
+            self.subscription = self.create_subscription(            
+                CompressedImage, topic, self.image_callback, qos_profile)
+        else:
+            self.subscription = self.create_subscription(
+                Image, topic, self.image_callback, qos_profile)
 
         # Start spinning thread
         self.spin_thread = threading.Thread(target=self.spin, daemon=True)
@@ -24,7 +36,10 @@ class ROS2VideoSource(Node):
     def image_callback(self, msg):
         """Callback to convert ROS Image message to OpenCV format"""
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            if self.compressed:
+                cv_image = self.bridge.compressed_imgmsg_to_cv2(msg)
+            else:
+                cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
             with self.frame_lock:
                 self.frame = cv_image
         except Exception as e:
