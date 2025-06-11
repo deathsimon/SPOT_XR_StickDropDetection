@@ -3,10 +3,17 @@ import configparser
 import time
 # import threading
 import numpy as np
+from collections import deque
 from skimage.metrics import structural_similarity as ssim
+from PySide6.QtGui import QImage, QMouseEvent, QKeyEvent
+from PySide6.QtCore import QThread, Signal, QEvent, QObject
 
-class StickDetector:    
-    def __init__(self, config_file="config"):
+class StickDetector(QThread):
+    updateFrame = Signal(QImage)
+    def __init__(self, parent, config_file="config"):
+        # handle Qt
+        QThread.__init__(self, parent)
+        
         # Load configuration
         config = configparser.ConfigParser()
         config.read(config_file)
@@ -20,6 +27,7 @@ class StickDetector:
             raise Exception(f"Error: Invalid video source '{self.video_source}' in {config_file}")
                     
         self.verbose = config.getboolean('Settings', 'verbose', fallback=False)  # Verbose output
+        self.show_fps = config.getboolean('Settings', 'fps_counter', fallback=True)  # Show fps counter
         self.target_IP = config['Settings'].get('IP', '') # IP address for signal
         self.target_port = config['Settings'].get('port', '') # IP address for signal
         self.fall_detection = int(config['Settings'].get('fall_detection_method', 0)) # Fall detection method
@@ -66,6 +74,65 @@ class StickDetector:
             print(f"Warning: {e}")
             self.spot_arm = None
 
+    def eventFilter(self, obj : QObject, event : QEvent):
+        event_map = {
+            QEvent.Type.MouseButtonPress: cv2.EVENT_LBUTTONDOWN,
+            QEvent.Type.MouseMove: cv2.EVENT_MOUSEMOVE,
+            QEvent.Type.MouseButtonRelease: cv2.EVENT_LBUTTONUP,
+        }
+        ev_ty = event_map.get(event.type(), None)
+        if ev_ty is not None:
+            mv = QMouseEvent(event)
+            x, y = mv.x(), mv.y()
+            self.mouse_callback(ev_ty, x, y, None, None)
+            return True
+        elif event.type() == QEvent.Type.KeyPress:
+            kv = QKeyEvent(event)
+            try:
+                self.keyboard_callback(chr(kv.key()))
+            except:
+                pass
+            return True
+        else:
+            return False
+
+    def keyboard_callback(self, key : str):
+        key = key.lower()
+        if key == 'q':
+            # Check for quit key
+            self.running = False
+            quit()
+        elif key == 'd':
+            # Restart detection after pressing 'd'
+            if self.aoi is None:
+                print("Error: No AOI selected. Please select an AOI first.")
+            self.prev_aoi = None # Reset previous AOI
+            self.detecting = True
+            print("Detection restarted.")
+        elif key == 'r':
+            # Reset Spot Arm                    
+            if self.check_connection() is True:
+                self.spot_arm.stand()
+                self.spot_arm.open_gripper_at_angle(27)
+                self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
+                # self.spot_arm.set_arm_velocity(0.0, 0.2, 0.0) # nudge left
+                # self.spot_arm.set_arm_velocity(0.0, -0.2, 0.0) # nudge right
+                print("Spot: Arm to default position.")                    
+        elif key == 'o':
+            if self.check_connection() is True:
+                self.spot_arm.open_gripper()
+                print("Spot: Arm gripper opened.")
+        elif key == 's':
+            if self.check_connection() is True:
+                self.spot_arm.close_gripper()
+                self.spot_arm.arm_stow()
+                self.spot_arm.sit()
+                print("Spot: Arm stowed and sitting.")
+        elif key == 'c':
+            if self.check_connection() is True:
+                self.spot_arm.close_gripper()
+                print("Spot: Arm gripper closed.")
+
     def mouse_callback(self, event, x, y, flags, param):
         """Handle mouse events for AOI selection"""
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -75,7 +142,7 @@ class StickDetector:
             x = max(0, min(x, self.frame_width - 1))
             y = max(0, min(y, self.frame_height - 1))
             self.start_point = (x, y)
-            self.end_point = (x, y)            
+            self.end_point = (x, y)
         elif event == cv2.EVENT_MOUSEMOVE and self.selecting_aoi:
             # Clamp coordinates to frame boundaries
             x = max(0, min(x, self.frame_width - 1))
@@ -148,7 +215,7 @@ class StickDetector:
         err /= float(img1.shape[0] * img1.shape[1])
         return err
         
-    def check_drop(self, frame):        
+    def check_drop(self, frame):
         """Check for drastic pixel changes in AOI"""
         if self.aoi is None or self.prev_aoi is None:
             return
@@ -192,11 +259,14 @@ class StickDetector:
 
     def run(self):
         """Main thread: Perform pixel change detection and display"""        
-        self.running = True        
+        self.running = True
+        self.last_time = time.time()
+        self.fps_dq = deque([], maxlen=50)
+        self.fps = 0.0
                 
         # Set up window and mouse callback for AOI selection        
-        cv2.namedWindow("Stick Detection", flags=cv2.WINDOW_GUI_NORMAL)
-        cv2.setMouseCallback("Stick Detection", self.mouse_callback)
+        # cv2.namedWindow("Stick Detection", flags=cv2.WINDOW_GUI_NORMAL)
+        # cv2.setMouseCallback("Stick Detection", self.mouse_callback)
 
         # Main loop: Detection and display
         try:
@@ -206,6 +276,12 @@ class StickDetector:
                 frame = self.video_stream.get_frame()
                 if frame is not None:
                     self.frame_height, self.frame_width = frame.shape[:2]
+                    
+                    # measure fps
+                    now = time.time()
+                    self.fps_dq.append(1.0 / (now - self.last_time))
+                    self.fps = sum(self.fps_dq) / len(self.fps_dq)
+                    self.last_time = now
                 else:
                     continue  # Skip if no frame yet                
                 
@@ -241,45 +317,19 @@ class StickDetector:
                         print(f"Drop Check Time: {end_time - start_time:.3f} seconds")
                 
                 # Display the frame                
-                cv2.imshow("Stick Detection", frame)
+                # cv2.imshow("Stick Detection", frame)
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 0.6
+                font_color = (255, 255, 255)  # White text
+                thickness = 1
+                cv2.putText(frame, f"{self.fps:03.1f}", (20, 20), font, font_scale, 
+                    font_color, thickness, cv2.LINE_AA)                
 
                 
-                key = cv2.waitKey(5) & 0xFF
-                if key == ord('q'):
-                    # Check for quit key
-                    self.running = False
-                    break
-                elif key == ord('d'):
-                    # Restart detection after pressing 'd'
-                    if self.aoi is None:
-                        print("Error: No AOI selected. Please select an AOI first.")
-                        continue
-                    self.prev_aoi = None # Reset previous AOI
-                    self.detecting = True
-                    print("Detection restarted.")
-                elif key == ord('r'):
-                    # Reset Spot Arm                    
-                    if self.check_connection() is True:
-                        self.spot_arm.stand()
-                        self.spot_arm.open_gripper_at_angle(27)
-                        self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
-                        # self.spot_arm.set_arm_velocity(0.0, 0.2, 0.0) # nudge left
-                        # self.spot_arm.set_arm_velocity(0.0, -0.2, 0.0) # nudge right
-                        print("Spot: Arm to default position.")                    
-                elif key == ord('o'):
-                    if self.check_connection() is True:
-                        self.spot_arm.open_gripper()
-                        print("Spot: Arm gripper opened.")
-                elif key == ord('s'):
-                    if self.check_connection() is True:
-                        self.spot_arm.close_gripper()
-                        self.spot_arm.arm_stow()
-                        self.spot_arm.sit()
-                        print("Spot: Arm stowed and sitting.")
-                elif key == ord('c'):
-                    if self.check_connection() is True:
-                        self.spot_arm.close_gripper()
-                        print("Spot: Arm gripper closed.")
+                # # create QImage and send to widget
+                h, w, ch = frame.shape
+                img = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
+                self.updateFrame.emit(img)
 
         except KeyboardInterrupt:
             print("Stopped by user.")
@@ -292,9 +342,4 @@ class StickDetector:
                 import rclpy
                 rclpy.shutdown()
 
-            cv2.destroyAllWindows()
-
-if __name__ == "__main__":
-    # Initialize detector with config file
-    detector = StickDetector(config_file="config")
-    detector.run()
+            # cv2.destroyAllWindows()
