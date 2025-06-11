@@ -32,16 +32,18 @@ class GuiContainer(QMainWindow):
         
         # install mouse & keyboard handling
         self.installEventFilter(self.runner_thread)
-        self.setFocus()        
+        self.setFocus()
         
         # create the layouts
         self.setCentralWidget(self.window)
 
     
     @Slot(QImage)
-    def setImage(self, image):
+    def setImage(self, image : QImage):
         #update image
+        self.frame_width, self.frame_height = image.width(), image.height()
         image = image.scaled(self.window.video_stream.width(), self.window.video_stream.height(), Qt.KeepAspectRatio)
+        self.scaled_width, self.scaled_height = image.width(), image.height()
         self.window.video_stream.setPixmap(QPixmap.fromImage(image)) 
     
     def __del__(self):

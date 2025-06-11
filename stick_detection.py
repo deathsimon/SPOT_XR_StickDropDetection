@@ -84,6 +84,16 @@ class StickDetector(QThread):
         if ev_ty is not None:
             mv = QMouseEvent(event)
             x, y = mv.x(), mv.y()
+            
+            # remap to actual frame size
+            x -= obj.window.video_stream.geometry().x()
+            y -= obj.window.video_stream.geometry().y()
+            w, h = obj.scaled_width, obj.scaled_height
+            fw, fh = obj.frame_width, obj.frame_height
+            x = int(x * (fw / w))
+            y = int(y * (fh / h))
+            
+            # call the old callback
             self.mouse_callback(ev_ty, x, y, None, None)
             return True
         elif event.type() == QEvent.Type.KeyPress:
