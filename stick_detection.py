@@ -11,7 +11,7 @@ from collections import deque
 from skimage.metrics import structural_similarity as ssim
 from PySide6.QtGui import QImage, QMouseEvent, QKeyEvent
 from PySide6.QtCore import QThread, Signal, QEvent, QObject
-
+from PySide6.QtWidgets import QLabel
 
 class StickDetector(QThread):
     updateFrame = Signal(QImage)
@@ -129,8 +129,14 @@ class StickDetector(QThread):
             x, y = mv.x(), mv.y()
 
             # remap to actual frame size
-            x -= obj.window.video_stream.geometry().x()
-            y -= obj.window.video_stream.geometry().y()
+            label: QLabel = obj.window.video_stream
+            x, y = label.mapFromParent(mv.pos()).x(), label.mapFromParent(mv.pos()).y()
+            
+            # vertical center alignment, left align
+            yoffset = (label.height() - label.pixmap().height()) / 2
+            y = int(y - yoffset)
+            
+            # transform to opencv frame size
             w, h = obj.scaled_width, obj.scaled_height
             fw, fh = obj.frame_width, obj.frame_height
             x = int(x * (fw / w))
