@@ -499,6 +499,7 @@ class StickDetector(QThread):
             self.total += 1
             print(f"Found something! {self.total}x")
             print("Stick has dropped!")
+            self.frame_thresholds.clear()
             if self.check_connection() is True:
                 self.spot_arm.close_gripper()  # Close gripper
                 print("Spot: Arm gripper closed.")
