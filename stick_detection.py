@@ -10,13 +10,63 @@ from rodholderclient import HolderClient
 from collections import deque
 from skimage.metrics import structural_similarity as ssim
 from PySide6.QtGui import QImage, QMouseEvent, QKeyEvent
-from PySide6.QtCore import QThread, Signal, QEvent, QObject
+from PySide6.QtCore import QThread, Signal, QEvent, QObject, Qt
 from PySide6.QtWidgets import QLabel
 
 class StickDetector(QThread):
     updateFrame = Signal(QImage)
+    
+    def _update_labels(self):
+        # handle labels to display status
+        font_green = r'<font face="sans" color="#009900" size="5">'
+        font_red = r'<font face="sans" color="#990000" size="5">'
+        if self.detecting:
+            self.parent().window.detection_status.setText(
+                f"{font_green}<i>Detecting</i></font>"
+                )
+        else:
+            self.parent().window.detection_status.setText(
+                f"{font_red}<i>Not Detecting</i></font>"
+                )
+            
+        self.parent().window.dropped_status.setText(f"Stick is: <i>{self.stick_state}</i>")
+        self.parent().window.aoi_string.setText(f"AOI: <i>{self.aoi}</i>")
 
-    def __init__(self, parent, config_file="config"):
+    
+    def _reload_settings(self, path: str):
+        self.reloadable_config = path
+        
+        parser = configparser.ConfigParser()
+        parser.read(path)
+        
+        aoi_str = parser['RuntimeSettings'].get("aoi", "None")
+        if aoi_str != "None":
+            self.aoi = tuple(int(x) for x in aoi_str.removeprefix('(').removesuffix(')').split(','))
+            print(f"Set AOI from config to: {self.aoi}")
+            self.detecting = True
+        else:        
+            self.aoi = None  # Area of interest: (x, y, w, h)
+            self.detecting = False
+
+        self.fall_detection = parser['RuntimeSettings'].getint("fall_detection_method", 0) # Fall detection method
+        if self.fall_detection == 0:
+            self.drop_threshold = parser['RuntimeSettings'].getint("MSE_threshold", 100)   # Pixels
+        else:
+            self.drop_threshold = parser['RuntimeSettings'].getfloat("SSIM_change_threshold", 0.2)   # SSIM
+        
+        self.stored_frames = parser['RuntimeSettings'].getint("stored_frames", 1)
+        self.required_frames = parser['RuntimeSettings'].getint("required_frames", 1)
+        assert self.stored_frames >= self.required_frames, "You cannot require more than you store!"
+        
+        self.frame_thresholds = deque([], maxlen=self.stored_frames)
+
+    def _save_aoi(self):
+        parser = configparser.ConfigParser()
+        parser.read(self.reloadable_config)
+        parser.set("RuntimeSettings", "aoi", str(self.aoi))
+        parser.write(open(self.reloadable_config, "w"))
+    
+    def __init__(self, parent, config_file="config", reloadable_config="hot_load_config"):
         # handle Qt
         QThread.__init__(self, parent)
 
@@ -72,7 +122,6 @@ class StickDetector(QThread):
         self.frame_thresholds = deque([], maxlen=self.stored_frames)
         self.running = False
         self.detecting = False
-        self.aoi = None  # Area of interest: (x, y, w, h)
         self.prev_aoi = None  # Previous AOI image for comparison
         self.prev_aoi_2 = None  # Previous AOI image for optical flow comparison
         self.selecting_aoi = False  # Flag for AOI selection
@@ -81,6 +130,9 @@ class StickDetector(QThread):
         self.last_frame = None
         self.last_movement = deque(maxlen=1)
         self.total = 0
+        
+        # read the reloadable configs
+        self._reload_settings(reloadable_config)
 
         # Initialize video capture
         if self.video_source == "RTSP":
@@ -116,8 +168,24 @@ class StickDetector(QThread):
         except ConnectionError as e:
             print(f"Warning: {e}")
             self.spot_arm = None
+        
+        # handle serial bus
+        if (config['Settings'].getboolean('use_serial_bus', True)):
+            self.bus  = serial.Serial('/dev/ttyUSB0', baudrate=9600, timeout=1)
+            time.sleep(1)
+            while True:
+                if self.bus.in_waiting > 0:  # Check if there is data to read
+                    break  # Exit loop once data is detected
+            self.stick_state = "Raised"
+        else:
+            self.stick_state = "???"
+            print("Serial bus is disabled!")
+            
+        # update labels of the dashboards
+        self._update_labels()
 
-    def eventFilter(self, obj: QObject, event: QEvent):
+
+    def eventFilter(self, obj : QObject, event : QEvent):
         event_map = {
             QEvent.Type.MouseButtonPress: cv2.EVENT_LBUTTONDOWN,
             QEvent.Type.MouseMove: cv2.EVENT_MOUSEMOVE,
@@ -126,6 +194,12 @@ class StickDetector(QThread):
         ev_ty = event_map.get(event.type(), None)
         if ev_ty is not None:
             mv = QMouseEvent(event)
+            if mv.button() == Qt.MouseButton.RightButton:
+                self.aoi = None
+                self.detecting = False
+                # after some input we update our labels
+                self._update_labels()
+                return True
             x, y = mv.x(), mv.y()
 
             # remap to actual frame size
@@ -144,6 +218,9 @@ class StickDetector(QThread):
 
             # call the old callback
             self.mouse_callback(ev_ty, x, y, None, None)
+            
+            # after some input we update our labels
+            self._update_labels()
             return True
         elif event.type() == QEvent.Type.KeyPress:
             kv = QKeyEvent(event)
@@ -151,17 +228,18 @@ class StickDetector(QThread):
                 self.keyboard_callback(chr(kv.key()))
             except:
                 pass
+            
+            # after some input we update our labels
+            self._update_labels()
             return True
         else:
             return False
 
     def keyboard_callback(self, key: str):
         key = key.lower()
-        if key == "q":
-            # Check for quit key
-            self.running = False
-            quit()
-        elif key == "d":
+        if key == 'q':
+            print("WARN: Close via window!")
+        elif key == 'd':
             # Restart detection after pressing 'd'
             if self.aoi is None:
                 print("Error: No AOI selected. Please select an AOI first.")
@@ -194,11 +272,21 @@ class StickDetector(QThread):
         elif key == "1":
             if self.holder:
                 self.holder.drop()
+                if self.stick_state == "Raised":
+                    self.stick_state = "Dropped"
+                elif self.stick_state == "Dropped":
+                    self.stick_state = "Raised"
                 print("Dropped stick.")
         elif key == "2":
             if self.holder:
                 self.holder.pullup()
                 print("Initiated stick pull up.")
+        elif key == 't':
+            self._save_aoi()
+            print("Saved current aoi.")
+        elif key == 'z':
+            self._reload_settings(self.reloadable_config)
+            print("Reloaded current config.")
 
     def mouse_callback(self, event, x, y, flags, param):
         """Handle mouse events for AOI selection"""
@@ -504,21 +592,21 @@ class StickDetector(QThread):
         if np.all(np.array(self.last_movement) > 0.1):
             self.total += 1
             print(f"Found something! {self.total}x")
+        self.frame_thresholds.append(changes)
+        if len([t for t in self.frame_thresholds if t > self.drop_threshold]) >= self.required_frames:
             print("Stick has dropped!")
             self.frame_thresholds.clear()
             if self.check_connection() is True:
                 self.spot_arm.close_gripper()  # Close gripper
                 print("Spot: Arm gripper closed.")
                 print("Did Spot catch the stick?")
-            # self.send_ws_signal(0x2d) # Send signal
             self.detecting = False  # Stop detection after drop
+            
+            # update our labels
+            self._update_labels()
 
-        # filtered = cv2.addWeighted(
-        #     filtered, 0.1, frame.astype(np.float32) / 256.0, 0.9, 0
-        # )
-
-        self.last_frame = frame
-        self.prev_aoi_2 = grey_current_aoi
+        # Update previous AOI
+        # self.prev_aoi = current_aoi.copy()    
 
     def run(self):
         """Main thread: Perform pixel change detection and display"""

@@ -36,8 +36,17 @@ class GuiContainer(QMainWindow):
         
         # create the layouts
         self.setCentralWidget(self.window)
-
-    
+        
+        # handle all the buttons
+        self.window.reset_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('r'))
+        self.window.open_full_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('o'))
+        self.window.sit_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('s'))
+        self.window.close_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('c'))
+        self.window.drop_stick_button.clicked.connect(lambda: self.runner_thread.keyboard_callback('1'))
+        
+        self.window.save_aoi_btn.clicked.connect(lambda: self.runner_thread._save_aoi())
+        self.window.reload_cfg_btn.clicked.connect(lambda: self.runner_thread._reload_settings(self.runner_thread.reloadable_config))
+            
     @Slot(QImage)
     def setImage(self, image : QImage):
         #update image
@@ -45,10 +54,6 @@ class GuiContainer(QMainWindow):
         image = image.scaled(self.window.video_stream.width(), self.window.video_stream.height(), Qt.KeepAspectRatio)
         self.scaled_width, self.scaled_height = image.width(), image.height()
         self.window.video_stream.setPixmap(QPixmap.fromImage(image)) 
-    
-    def __del__(self):
-        self.runner_thread.running = False
-        self.label.destroy()
 
 if __name__ == "__main__":
     # initialize Qt-app
