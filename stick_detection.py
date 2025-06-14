@@ -43,10 +43,12 @@ class StickDetector(QThread):
         if self.stick_state == "Raised":
             window.drop_stick_button.setText("Drop")
             window.drop_stick_button.setIcon(window.style().standardIcon(QStyle.SP_ArrowDown))
+            window.drop_stick_button.clicked.connect(lambda: self.keyboard_callback('1'))
             window.dropped_status.setText(f"{font_green}Stick is: <i>{self.stick_state}</i></font>")
         elif self.stick_state == "Dropped":
             window.drop_stick_button.setText("Raise")
             window.drop_stick_button.setIcon(window.style().standardIcon(QStyle.SP_ArrowUp))
+            window.drop_stick_button.clicked.connect(lambda: self.keyboard_callback('2'))
             window.dropped_status.setText(f"{font_red}Stick is: <i>{self.stick_state}</i></font>")
         else:
             window.drop_stick_button.setText("No Stick")
@@ -138,10 +140,15 @@ class StickDetector(QThread):
             "You cannot require more than you store!"
         )
 
-        self.holder = HolderClient(
-            host=config["Settings"].get("holderhost", "localhost"),
-            port=config["Settings"].get("holderport", 8000)
-        )
+        if config["Settings"].getboolean("use_stick_ws", True):
+            self.holder = HolderClient(
+                host=config["Settings"].get("holderhost", "localhost"),
+                port=config["Settings"].get("holderport", 8000)
+            )
+            self.stick_state = "Raised"
+        else:
+            self.stick_state = "???"
+            print("Stick holder is disabled")
 
         # Initialize shared variables
         self.frame = None  # Latest frame from video stream
@@ -197,18 +204,6 @@ class StickDetector(QThread):
             print(f"Warning: {e}")
             self.spot_arm = None
         
-        # handle serial bus
-        if (config['Settings'].getboolean('use_serial_bus', True)):
-            self.bus  = serial.Serial('/dev/ttyUSB0', baudrate=9600, timeout=1)
-            time.sleep(1)
-            while True:
-                if self.bus.in_waiting > 0:  # Check if there is data to read
-                    break  # Exit loop once data is detected
-            self.stick_state = "Raised"
-        else:
-            self.stick_state = "???"
-            print("Serial bus is disabled!")
-            
         # update labels of the dashboards
         self._update_labels()
 
@@ -295,15 +290,13 @@ class StickDetector(QThread):
         elif key == "1":
             if self.holder:
                 self.holder.drop()
-                if self.stick_state == "Raised":
-                    self.stick_state = "Dropped"
-                elif self.stick_state == "Dropped":
-                    self.stick_state = "Raised"
+                self.stick_state = "Dropped"
                 print(f"Dropped stick.")
         elif key == "2":
             if self.holder:
                 self.holder.pullup()
-                print("Initiated stick pull up to {self.stick_state}.")
+                self.stick_state = "Raised"
+                print(f"Raised Stick.")
         elif key == 't':
             self._save_aoi()
             print("Saved current aoi.")

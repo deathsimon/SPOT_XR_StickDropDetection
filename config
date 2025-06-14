@@ -1,6 +1,6 @@
 [Settings]
 # Video source: 'ROS2' for ROS2 topic, 'RTSP' for RTSP stream, or 'Camera' for local camera
-video_source = ROS2
+video_source = Camera
 #video_source = RTSP
 # RTSP server address
 rtsp_url = rtsp://10.42.1.61:8554/cam_360?tcp
@@ -11,8 +11,7 @@ camera_index = 0
 video_topic = /theta/image/compressed
 verbose = True
 fps_counter = True
-use_serial_bus = True
 # Send signal to the server when a drop is detected
 IP = 0.0.0.0
 port = 8888
-arduino = /dev/ttyUSB0
+use_stick_ws = True

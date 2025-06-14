@@ -1,5 +1,5 @@
 [RuntimeSettings]
-aoi = (538, 105, 101, 116)
+aoi = (87, 131, 223, 62)
 fall_detection_method = 0
 mse_threshold = 100
 ssim_change_threshold = 0.2
