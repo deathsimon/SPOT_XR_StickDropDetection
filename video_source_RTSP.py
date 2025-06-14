@@ -10,6 +10,7 @@ class RTSPVideoSource:
 
         self.frame = None
         self.frame_lock = threading.Lock()
+        self.frame_available = threading.Semaphore()
         self.running = True
 
         # Start the video capture thread
@@ -21,6 +22,7 @@ class RTSPVideoSource:
         while self.running:
             ret, frame = self.capture.read()
             if ret:
+                self.frame_available.release()
                 with self.frame_lock:
                     self.frame = frame
             else:
@@ -28,8 +30,9 @@ class RTSPVideoSource:
 
     def get_frame(self):
         """Return a copy of the latest frame."""
+        self.frame_available.acquire()
         with self.frame_lock:
-            return self.frame.copy() if self.frame is not None else None
+            return self.frame if self.frame is not None else None
 
     def release(self):
         """Clean up resources."""

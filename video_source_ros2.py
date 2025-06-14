@@ -12,6 +12,7 @@ class ROS2VideoSource(Node):
         self.bridge = CvBridge()
         self.frame = None
         self.frame_lock = threading.Lock()
+        self.frame_available = threading.Semaphore()
         self.running = True
         self.compressed = True  # Set to True for CompressedImage, False for Image
 
@@ -41,6 +42,7 @@ class ROS2VideoSource(Node):
             else:
                 cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
             with self.frame_lock:
+                self.frame_available.release()
                 self.frame = cv_image
         except Exception as e:
             self.get_logger().error(f"Error converting image: {e}")
@@ -52,8 +54,9 @@ class ROS2VideoSource(Node):
 
     def get_frame(self):
         """Return a copy of the latest frame"""
+        self.frame_available.acquire()
         with self.frame_lock:
-            return self.frame.copy() if self.frame is not None else None
+            return self.frame if self.frame is not None else None
 
     def release(self):
         """Clean up resources"""

@@ -1,21 +1,27 @@
 [Settings]
 # Video source: 'ROS2' for ROS2 topic, 'RTSP' for RTSP stream, or 'Camera' for local camera
-video_source = Camera
+video_source = ROS2
+#video_source = RTSP
 # RTSP server address
-rtsp_url = rtsp://localhost:8554/live
+rtsp_url = rtsp://10.42.1.61:8554/cam_360?tcp
 # Camera device index
 camera_index = 0
 # ROS2 topic for video stream
 # '/theta/image_raw' or '/theta/image/compressed'
-ros2_topic = /camera/image/compressed
+video_topic = /theta/image/compressed
 # Method: 0 for MSE, 1 for SSIM
-fall_detection_method = 0
+fall_detection_method = 2
 # Threshold for detecting a drop
-MSE_threshold = 250
+MSE_threshold = 300
 SSIM_change_threshold = 0.2
 # Print all the information (YOLO inference time, Y of the detected object, etc.)
-verbose = False
+verbose =True
 fps_counter = True
+;stored_frames = 5
+stored_frames = 1
+;required_frames = 3
+required_frames = 1
 # Send signal to the server when a drop is detected
-; IP = 
-; port =
+IP = 0.0.0.0
+port = 8888
+arduino = /dev/ttyUSB0

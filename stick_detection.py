@@ -1,80 +1,123 @@
 import cv2
 import configparser
 import time
+
 # import threading
 import numpy as np
+import serial
+from rodholderclient import HolderClient
+
 from collections import deque
 from skimage.metrics import structural_similarity as ssim
 from PySide6.QtGui import QImage, QMouseEvent, QKeyEvent
 from PySide6.QtCore import QThread, Signal, QEvent, QObject
 
+
 class StickDetector(QThread):
     updateFrame = Signal(QImage)
+
     def __init__(self, parent, config_file="config"):
         # handle Qt
         QThread.__init__(self, parent)
-        
+
         # Load configuration
         config = configparser.ConfigParser()
         config.read(config_file)
 
-        if 'Settings' not in config:
+        if "Settings" not in config:
             raise Exception(f"Error: 'Settings' section not found in {config_file}")
-        
+
         # Read parameters from config
-        self.video_source = config['Settings'].get('video_source', '')
-        if self.video_source not in ['RTSP', 'Camera', 'ROS2']:
-            raise Exception(f"Error: Invalid video source '{self.video_source}' in {config_file}")
-                    
-        self.verbose = config.getboolean('Settings', 'verbose', fallback=False)  # Verbose output
-        self.show_fps = config.getboolean('Settings', 'fps_counter', fallback=True)  # Show fps counter
-        self.target_IP = config['Settings'].get('IP', '') # IP address for signal
-        self.target_port = config['Settings'].get('port', '') # IP address for signal
-        self.fall_detection = int(config['Settings'].get('fall_detection_method', 0)) # Fall detection method
+        self.video_source = config["Settings"].get("video_source", "")
+        if self.video_source not in ["RTSP", "Camera", "ROS2"]:
+            raise Exception(
+                f"Error: Invalid video source '{self.video_source}' in {config_file}"
+            )
+
+        self.verbose = config.getboolean(
+            "Settings", "verbose", fallback=False
+        )  # Verbose output
+        self.show_fps = config.getboolean(
+            "Settings", "fps_counter", fallback=True
+        )  # Show fps counter
+        self.target_IP = config["Settings"].get("IP", "")  # IP address for signal
+        self.target_port = config["Settings"].get("port", "")  # IP address for signal
+        self.fall_detection = int(
+            config["Settings"].get("fall_detection_method", 0)
+        )  # Fall detection method
         if self.fall_detection == 0:
-            self.drop_threshold = int(config['Settings'].get('MSE_threshold', 1000))    # Pixels
+            self.drop_threshold = int(
+                config["Settings"].get("MSE_threshold", 1000)
+            )  # Pixels
         else:
-            self.drop_threshold = float(config['Settings'].get('SSIM_change_threshold', 0.5))    # SSIM
-        
+            self.drop_threshold = float(
+                config["Settings"].get("SSIM_change_threshold", 0.5)
+            )  # SSIM
+
+        self.stored_frames = int(config["Settings"].get("stored_frames", 3))
+        self.required_frames = int(config["Settings"].get("required_frames", 2))
+        assert self.stored_frames >= self.required_frames, (
+            "You cannot require more than you store!"
+        )
+
+        self.holder = HolderClient(
+            host=config["Settings"].get("holderhost", "localhost"),
+            port=config["Settings"].get("holderport", 8000)
+        )
+
         # Initialize shared variables
         self.frame = None  # Latest frame from video stream
         self.frame_height = 0  # Frame dimensions
         self.frame_width = 0
-        self.running = False        
+        self.frame_thresholds = deque([], maxlen=self.stored_frames)
+        self.running = False
         self.detecting = False
         self.aoi = None  # Area of interest: (x, y, w, h)
         self.prev_aoi = None  # Previous AOI image for comparison
+        self.prev_aoi_2 = None  # Previous AOI image for optical flow comparison
         self.selecting_aoi = False  # Flag for AOI selection
         self.start_point = None  # For mouse drawing
         self.end_point = None  # For mouse drawing
-        
+        self.last_frame = None
+        self.last_movement = deque(maxlen=1)
+        self.total = 0
+
         # Initialize video capture
-        if self.video_source == 'RTSP':
-            rtsp_url = config['Settings'].get('rtsp_url', '')  # RTSP URL for the stream
+        if self.video_source == "RTSP":
+            rtsp_url = config["Settings"].get("rtsp_url", "")  # RTSP URL for the stream
             from video_source_RTSP import RTSPVideoSource
-            self.video_stream = RTSPVideoSource(rtsp_url)            
+
+            self.video_stream = RTSPVideoSource(rtsp_url)
             print(f"Using RTSP URL: {rtsp_url}")
-        elif self.video_source == 'Camera':
-            camera_index = int(config['Settings'].get('camera_index', 0)) # Camera index if needed
+        elif self.video_source == "Camera":
+            camera_index = int(
+                config["Settings"].get("camera_index", 0)
+            )  # Camera index if needed
             from video_source_camera import CameraVideoSource
-            self.video_stream = CameraVideoSource(camera_index)            
+
+            self.video_stream = CameraVideoSource(camera_index)
             print(f"Using Camera Index: {camera_index}")
-        elif self.video_source == 'ROS2':
+        elif self.video_source == "ROS2":
             import rclpy
+
             rclpy.init()
-            from video_source_ros2 import ROS2VideoSource            
-            video_topic = config['Settings'].get('video_topic', '')  # ROS2 topic for the stream
-            self.video_stream = ROS2VideoSource(video_topic)            
-                        
-        # Set up link to Spot Arm via ROS2 client using target IP and port        
+            from video_source_ros2 import ROS2VideoSource
+
+            video_topic = config["Settings"].get(
+                "video_topic", ""
+            )  # ROS2 topic for the stream
+            self.video_stream = ROS2VideoSource(video_topic)
+
+        # Set up link to Spot Arm via ROS2 client using target IP and port
         from Spot_arm import SpotArm
+
         try:
             self.spot_arm = SpotArm(self.target_IP, self.target_port)
         except ConnectionError as e:
             print(f"Warning: {e}")
             self.spot_arm = None
 
-    def eventFilter(self, obj : QObject, event : QEvent):
+    def eventFilter(self, obj: QObject, event: QEvent):
         event_map = {
             QEvent.Type.MouseButtonPress: cv2.EVENT_LBUTTONDOWN,
             QEvent.Type.MouseMove: cv2.EVENT_MOUSEMOVE,
@@ -84,7 +127,7 @@ class StickDetector(QThread):
         if ev_ty is not None:
             mv = QMouseEvent(event)
             x, y = mv.x(), mv.y()
-            
+
             # remap to actual frame size
             x -= obj.window.video_stream.geometry().x()
             y -= obj.window.video_stream.geometry().y()
@@ -92,7 +135,7 @@ class StickDetector(QThread):
             fw, fh = obj.frame_width, obj.frame_height
             x = int(x * (fw / w))
             y = int(y * (fh / h))
-            
+
             # call the old callback
             self.mouse_callback(ev_ty, x, y, None, None)
             return True
@@ -106,42 +149,50 @@ class StickDetector(QThread):
         else:
             return False
 
-    def keyboard_callback(self, key : str):
+    def keyboard_callback(self, key: str):
         key = key.lower()
-        if key == 'q':
+        if key == "q":
             # Check for quit key
             self.running = False
             quit()
-        elif key == 'd':
+        elif key == "d":
             # Restart detection after pressing 'd'
             if self.aoi is None:
                 print("Error: No AOI selected. Please select an AOI first.")
-            self.prev_aoi = None # Reset previous AOI
+            self.prev_aoi = None  # Reset previous AOI
             self.detecting = True
             print("Detection restarted.")
-        elif key == 'r':
-            # Reset Spot Arm                    
+        elif key == "r":
+            # Reset Spot Arm
             if self.check_connection() is True:
                 self.spot_arm.stand()
-                self.spot_arm.open_gripper_at_angle(27)
+                self.spot_arm.open_gripper_at_angle(35)
                 self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
                 # self.spot_arm.set_arm_velocity(0.0, 0.2, 0.0) # nudge left
                 # self.spot_arm.set_arm_velocity(0.0, -0.2, 0.0) # nudge right
-                print("Spot: Arm to default position.")                    
-        elif key == 'o':
+                print("Spot: Arm to default position.")
+        elif key == "o":
             if self.check_connection() is True:
                 self.spot_arm.open_gripper()
                 print("Spot: Arm gripper opened.")
-        elif key == 's':
+        elif key == "s":
             if self.check_connection() is True:
                 self.spot_arm.close_gripper()
                 self.spot_arm.arm_stow()
                 self.spot_arm.sit()
                 print("Spot: Arm stowed and sitting.")
-        elif key == 'c':
+        elif key == "c":
             if self.check_connection() is True:
                 self.spot_arm.close_gripper()
                 print("Spot: Arm gripper closed.")
+        elif key == "1":
+            if self.holder:
+                self.holder.drop()
+                print("Dropped stick.")
+        elif key == "2":
+            if self.holder:
+                self.holder.pullup()
+                print("Initiated stick pull up.")
 
     def mouse_callback(self, event, x, y, flags, param):
         """Handle mouse events for AOI selection"""
@@ -157,7 +208,7 @@ class StickDetector(QThread):
             # Clamp coordinates to frame boundaries
             x = max(0, min(x, self.frame_width - 1))
             y = max(0, min(y, self.frame_height - 1))
-            self.end_point = (x, y)            
+            self.end_point = (x, y)
         elif event == cv2.EVENT_LBUTTONUP:
             self.selecting_aoi = False
             x1, y1 = self.start_point
@@ -179,7 +230,7 @@ class StickDetector(QThread):
                 self.prev_aoi = None  # Reset previous AOI for new selection
                 print("Starting Stick Detection...")
 
-    def draw_status_tag(self, frame, x, y, status_tag="", bg_color=(0,0,0)):
+    def draw_status_tag(self, frame, x, y, status_tag="", bg_color=(0, 0, 0)):
         """Draw status tag above the AOI or at top-left corner"""
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.6
@@ -187,52 +238,152 @@ class StickDetector(QThread):
         thickness = 1
 
         # Get text size
-        (text_w, text_h), baseline = cv2.getTextSize(status_tag, font, font_scale, thickness)
-        
+        (text_w, text_h), baseline = cv2.getTextSize(
+            status_tag, font, font_scale, thickness
+        )
+
         # Position: Above AOI if set, else top-left corner
         text_x = x
         text_y = max(y - text_h - 5, 5)  # 5 pixels above AOI, avoid top edge
 
         # Draw background rectangle
-        cv2.rectangle(frame, (text_x, text_y - text_h), 
-                     (text_x + text_w, text_y + baseline), bg_color, -1)
+        cv2.rectangle(
+            frame,
+            (text_x, text_y - text_h),
+            (text_x + text_w, text_y + baseline),
+            bg_color,
+            -1,
+        )
         # Draw text
-        cv2.putText(frame, status_tag, (text_x, text_y), font, font_scale, 
-                    font_color, thickness, cv2.LINE_AA)                
-        
-    
+        cv2.putText(
+            frame,
+            status_tag,
+            (text_x, text_y),
+            font,
+            font_scale,
+            font_color,
+            thickness,
+            cv2.LINE_AA,
+        )
+
     def check_connection(self):
         if self.spot_arm is None:
             print("Warning: Action not performed. Spot Arm not initialized.")
             return False
-        return True               
+        return True
 
     def compute_ssim(self, img1, img2):
-        """Compute SSIM between two images"""         
+        """Compute SSIM between two images"""
         if img1.shape != img2.shape:
             return -1.0
         try:
             score = ssim(img1, img2, channel_axis=-1, data_range=255)
             return score
-        except ValueError:            
-            return -1.0  # Handle errors (e.g., empty images)    
+        except ValueError:
+            return -1.0  # Handle errors (e.g., empty images)
 
     def compute_mse(self, img1, img2):
         """Compute mean squared error between two images"""
         if img1.shape != img2.shape:
-            return float('inf')  # Invalid comparison
+            return float("inf")  # Invalid comparison
         err = np.sum((img1.astype("float") - img2.astype("float")) ** 2)
         err /= float(img1.shape[0] * img1.shape[1])
         return err
-        
+    
+    def compute_opflow(self, prev_aoi, curr_aoi) -> bool:
+        """Compute downwards optical flow two images"""
+
+
+        grey_prev_aoi = cv2.cvtColor(prev_aoi, cv2.COLOR_BGR2GRAY)
+        grey_curr_aoi = cv2.cvtColor(curr_aoi, cv2.COLOR_BGR2GRAY)
+
+        # calculate flow
+        flow = cv2.calcOpticalFlowFarneback(
+            grey_prev_aoi,
+            grey_curr_aoi,
+            None,
+            pyr_scale=0.5,
+            levels=1,
+            winsize=6,
+            iterations=2,
+            poly_n=2,
+            poly_sigma=1.2,
+            flags=0,
+        )
+
+        # mag_img, pha_img = cv2.cartToPolar(
+        #     flow[..., 0], flow[..., 1], angleInDegrees=True
+        # )
+
+        # filtered = np.where(
+        #     ((pha_img < 110) & (pha_img > 60)) & (mag_img > 6.0), mag_img, 0
+        # )
+        # w,h = self.aoi[2:4]
+        # area = w*h
+
+        # normed_change = filtered.sum()/area
+        # if normed_change > 0.1:
+        #     print(f"{normed_change=}")
+        # self.last_movement.append(normed_change)
+
+
+
+        # if np.all(np.array(self.last_movement) > 10000):
+        # if np.all(np.array(self.last_movement) > 0.1):
+        #     self.total += 1
+        #     if self.check_connection() is True:
+        #         self.spot_arm.close_gripper()  # Close gripper
+        #         print("Spot: Arm gripper closed.")
+        #     print(f"Found something! {self.total}x")
+        #     print("Stick has dropped!")
+        #     # self.send_ws_signal(0x2d) # Send signal
+        #     self.detecting = False  # Stop detection after drop
+        #     return True
+
+        # Calculate the magnitude and angle (in radians)
+        magnitude, angle = cv2.cartToPolar(flow[..., 0], flow[..., 1], angleInDegrees=False)
+
+        # Create a mask for angles close to downward direction (π/2)
+        angle_tol = 0.2 # tolerance in radians (~11.5 degrees)
+        down_mask = (angle > (np.pi/2 - angle_tol)) & (angle < (np.pi/2 + angle_tol))
+
+        # Optionally, threshold by magnitude to avoid noise
+        magnitude_thresh = 2.5
+        significant_motion = magnitude > magnitude_thresh
+
+        # print(f"{magnitude=}")
+
+        # Combine both masks
+        falling_pixels = down_mask & significant_motion
+
+
+        # print(f"{falling_pixels=}")
+
+        # Count or visualize
+        if np.any(falling_pixels):
+            print("Downward motion detected!")
+            if self.check_connection() is True:
+                self.spot_arm.close_gripper()  # Close gripper
+                print("Spot: Arm gripper closed.")
+            print(f"Found something! {self.total}x")
+            print("Stick has dropped!")
+            # self.send_ws_signal(0x2d) # Send signal
+            self.detecting = False  # Stop detection after drop
+            return True
+        # else:
+        #     print("No significant downward motion.")
+
+        return False
+
+
     def check_drop(self, frame):
         """Check for drastic pixel changes in AOI"""
         if self.aoi is None or self.prev_aoi is None:
             return
-        
+
         x, y, w, h = self.aoi
         # Extract current AOI
-        current_aoi = frame[y:y+h, x:x+w]
+        current_aoi = frame[y : y + h, x : x + w]
 
         if current_aoi.size == 0 or current_aoi.shape != self.prev_aoi.shape:
             return
@@ -242,9 +393,9 @@ class StickDetector(QThread):
             changes = self.compute_mse(current_aoi, self.prev_aoi)
             if self.verbose:
                 print(f"Current AOI MSE: {changes:.2f}")
-        else:
+        elif self.fall_detection == 1:
             # Compute SSIM
-            changes = self.compute_ssim(current_aoi, self.prev_aoi)            
+            changes = self.compute_ssim(current_aoi, self.prev_aoi)
             if changes < 0:
                 print("Error: SSIM computation failed.")
                 return
@@ -252,10 +403,101 @@ class StickDetector(QThread):
                 # Invert SSIM to get a change metric
                 changes = 1 - changes
             if self.verbose:
-                print(f"Current AOI SSIM: {changes:.2f}")            
-        
+                print(f"Current AOI SSIM: {changes:.2f}")
+        elif self.fall_detection == 2:
+            changes = self.compute_opflow(self.prev_aoi, current_aoi)
+
         # Check if change exceeds threshold
-        if changes > self.drop_threshold:
+        if self.fall_detection < 2:
+            self.frame_thresholds.append(changes)
+            if len([t for t in self.frame_thresholds if t > self.drop_threshold]) >= self.required_frames:
+                print("Stick has dropped!")
+                self.frame_thresholds.clear()
+                if self.check_connection() is True:
+                    self.spot_arm.close_gripper()  # Close gripper
+                    print("Spot: Arm gripper closed.")
+                    print("Did Spot catch the stick?")
+                # self.send_ws_signal(0x2d) # Send signal
+                self.detecting = False  # Stop detection after drop
+
+
+
+    def check_drop_cni(self, frame):
+        """Check for drastic pixel changes in AOI"""
+        if self.aoi is None and self.prev_aoi_2 is None:
+            return
+        
+        current_aoi = None
+
+        x, y, w, h = self.aoi
+        # print("Actually comparing 1")
+        if self.prev_aoi_2 is None:
+            # x, y, w, h = self.aoi
+            current_aoi = frame[y : y + h, x : x + w]
+            self.prev_aoi_2 = cv2.cvtColor(current_aoi, cv2.COLOR_BGR2GRAY)
+            return
+
+        # print("Actually comparing 2")
+
+        if current_aoi == None:
+            # if x == None:
+            #     x, y, w, h = self.aoi
+            current_aoi = frame[y : y + h, x : x + w]
+        grey_current_aoi = cv2.cvtColor(current_aoi, cv2.COLOR_BGR2GRAY)
+
+
+        # print("Actually comparing 3")
+
+        if current_aoi.size == 0:
+            return
+
+
+        # print("Actually comparing 4")
+
+        # print(f"{grey_current_aoi.shape=}, {self.prev_aoi_2.shape=}")
+        
+        if grey_current_aoi.shape != self.prev_aoi_2.shape:
+            self.last_frame = frame
+            self.prev_aoi_2 = grey_current_aoi
+            return
+
+
+        # print("Actually comparing 5")
+
+        # calculate flow
+        flow = cv2.calcOpticalFlowFarneback(
+            self.prev_aoi_2,
+            grey_current_aoi,
+            None,
+            pyr_scale=0.5,
+            levels=1,
+            winsize=3,
+            iterations=1,
+            poly_n=2,
+            poly_sigma=1.2,
+            flags=0,
+        )
+
+        mag_img, pha_img = cv2.cartToPolar(
+            flow[..., 0], flow[..., 1], angleInDegrees=True
+        )
+
+        filtered = np.where(
+            ((pha_img < 110) & (pha_img > 60)) & (mag_img > 6.0), mag_img, 0
+        )
+
+        area = w*h
+        normed_change = filtered.sum()/area
+        if normed_change > 0.1:
+            print(f"{normed_change=}")
+        self.last_movement.append(normed_change)
+
+
+
+        # if np.all(np.array(self.last_movement) > 10000):
+        if np.all(np.array(self.last_movement) > 0.1):
+            self.total += 1
+            print(f"Found something! {self.total}x")
             print("Stick has dropped!")
             if self.check_connection() is True:
                 self.spot_arm.close_gripper()  # Close gripper
@@ -264,17 +506,21 @@ class StickDetector(QThread):
             # self.send_ws_signal(0x2d) # Send signal
             self.detecting = False  # Stop detection after drop
 
-        # Update previous AOI
-        # self.prev_aoi = current_aoi.copy()    
+        # filtered = cv2.addWeighted(
+        #     filtered, 0.1, frame.astype(np.float32) / 256.0, 0.9, 0
+        # )
+
+        self.last_frame = frame
+        self.prev_aoi_2 = grey_current_aoi
 
     def run(self):
-        """Main thread: Perform pixel change detection and display"""        
+        """Main thread: Perform pixel change detection and display"""
         self.running = True
         self.last_time = time.time()
         self.fps_dq = deque([], maxlen=50)
         self.fps = 0.0
-                
-        # Set up window and mouse callback for AOI selection        
+
+        # Set up window and mouse callback for AOI selection
         # cv2.namedWindow("Stick Detection", flags=cv2.WINDOW_GUI_NORMAL)
         # cv2.setMouseCallback("Stick Detection", self.mouse_callback)
 
@@ -282,19 +528,34 @@ class StickDetector(QThread):
         try:
             while self.running:
                 # Get the latest frame
-                
+
                 frame = self.video_stream.get_frame()
                 if frame is not None:
                     self.frame_height, self.frame_width = frame.shape[:2]
-                    
+
                     # measure fps
                     now = time.time()
                     self.fps_dq.append(1.0 / (now - self.last_time))
                     self.fps = sum(self.fps_dq) / len(self.fps_dq)
                     self.last_time = now
                 else:
-                    continue  # Skip if no frame yet                
-                
+                    continue  # Skip if no frame yet
+
+                # Initialize prev_aoi with first valid AOI
+                if self.aoi and self.prev_aoi is None:
+                    x, y, w, h = self.aoi
+                    self.prev_aoi = frame[y : y + h, x : x + w].copy()
+
+                # Perform detection
+                if self.detecting:
+                    # Check for drop
+                    start_time = time.time()
+                    self.check_drop(frame)
+                    # self.check_drop_cni(frame)
+                    end_time = time.time()
+                    # if self.verbose:
+                    #    print(f"Drop Check Time: {((end_time - start_time)*1e3):.3f} ms")
+
                 # Draw AOI rectangle if selecting or selected
                 if self.selecting_aoi and self.start_point and self.end_point:
                     x1, y1 = self.start_point
@@ -302,43 +563,36 @@ class StickDetector(QThread):
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
                     self.draw_status_tag(frame, x1, y1, "Selecting", (255, 0, 0))
                 elif self.aoi:
-                    x, y, w, h = self.aoi                    
+                    x, y, w, h = self.aoi
                     if self.detecting:
                         aoi_color = (0, 255, 0)  # Green for detecting
                         status_tag = "Detecting"
                     else:
                         aoi_color = (0, 0, 255)  # Red for not detecting
                         status_tag = "Suspend"
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), aoi_color, 2)
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), aoi_color, 2)
                     self.draw_status_tag(frame, x, y, status_tag, aoi_color)
-                    
-                # Initialize prev_aoi with first valid AOI
-                if self.aoi and self.prev_aoi is None:
-                    x, y, w, h = self.aoi
-                    self.prev_aoi = frame[y:y+h, x:x+w].copy()
 
-                # Perform detection
-                if self.detecting:
-                    # Check for drop
-                    start_time = time.time()
-                    self.check_drop(frame)
-                    end_time = time.time()
-                    if self.verbose:
-                        print(f"Drop Check Time: {end_time - start_time:.3f} seconds")
-                
-                # Display the frame                
+                # Display the frame
                 # cv2.imshow("Stick Detection", frame)
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 font_scale = 0.6
                 font_color = (255, 255, 255)  # White text
                 thickness = 1
-                cv2.putText(frame, f"{self.fps:03.1f}", (20, 20), font, font_scale, 
-                    font_color, thickness, cv2.LINE_AA)                
+                cv2.putText(
+                    frame,
+                    f"{self.fps:03.1f}",
+                    (20, 20),
+                    font,
+                    font_scale,
+                    font_color,
+                    thickness,
+                    cv2.LINE_AA,
+                )
 
-                
                 # # create QImage and send to widget
                 h, w, ch = frame.shape
-                img = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
+                img = QImage(frame.data, w, h, ch * w, QImage.Format_BGR888)
                 self.updateFrame.emit(img)
 
         except KeyboardInterrupt:
@@ -347,9 +601,10 @@ class StickDetector(QThread):
 
         # Cleanup
         finally:
-            self.video_stream.release()            
+            self.video_stream.release()
             if self.video_source == "ROS2":
                 import rclpy
+
                 rclpy.shutdown()
 
             # cv2.destroyAllWindows()
