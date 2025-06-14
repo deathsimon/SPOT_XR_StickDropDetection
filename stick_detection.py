@@ -11,26 +11,48 @@ from collections import deque
 from skimage.metrics import structural_similarity as ssim
 from PySide6.QtGui import QImage, QMouseEvent, QKeyEvent
 from PySide6.QtCore import QThread, Signal, QEvent, QObject, Qt
-from PySide6.QtWidgets import QLabel
+from PySide6.QtWidgets import QLabel, QStyle, QWidget
 
 class StickDetector(QThread):
     updateFrame = Signal(QImage)
     
     def _update_labels(self):
         # handle labels to display status
+        window: QWidget = self.parent().window
+        
         font_green = r'<font face="sans" color="#009900" size="5">'
         font_red = r'<font face="sans" color="#990000" size="5">'
+        font_blue = r'<font face="sans" color="#000099" size="4">'
+        sheet = "text-align: right;"
         if self.detecting:
-            self.parent().window.detection_status.setText(
+            window.detection_status.setText(
                 f"{font_green}<i>Detecting</i></font>"
                 )
+            window.detection_btn.setText("Stop")
+            window.detection_btn.setIcon(window.style().standardIcon(QStyle.SP_MediaStop))
+            
+            # self._dynamic_btn_sizer(window.detection_btn)
         else:
-            self.parent().window.detection_status.setText(
+            window.detection_status.setText(
                 f"{font_red}<i>Not Detecting</i></font>"
                 )
-            
-        self.parent().window.dropped_status.setText(f"Stick is: <i>{self.stick_state}</i>")
-        self.parent().window.aoi_string.setText(f"AOI: <i>{self.aoi}</i>")
+            window.detection_btn.setText("Start")
+            # window.detection_btn.setStyleSheet(sheet)
+            window.detection_btn.setIcon(window.style().standardIcon(QStyle.SP_MediaPlay))
+        
+        if self.stick_state == "Raised":
+            window.drop_stick_button.setText("Drop")
+            window.drop_stick_button.setIcon(window.style().standardIcon(QStyle.SP_ArrowDown))
+            window.dropped_status.setText(f"{font_green}Stick is: <i>{self.stick_state}</i></font>")
+        elif self.stick_state == "Dropped":
+            window.drop_stick_button.setText("Raise")
+            window.drop_stick_button.setIcon(window.style().standardIcon(QStyle.SP_ArrowUp))
+            window.dropped_status.setText(f"{font_red}Stick is: <i>{self.stick_state}</i></font>")
+        else:
+            window.drop_stick_button.setText("No Stick")
+            window.drop_stick_button.setEnabled(False)
+        
+        window.aoi_string.setText(f"{font_blue}AOI:<br><i>{self.aoi}</i></font>")
 
     
     def _reload_settings(self, path: str):
@@ -43,7 +65,7 @@ class StickDetector(QThread):
         if aoi_str != "None":
             self.aoi = tuple(int(x) for x in aoi_str.removeprefix('(').removesuffix(')').split(','))
             print(f"Set AOI from config to: {self.aoi}")
-            self.detecting = True
+            self.detecting = False
         else:        
             self.aoi = None  # Area of interest: (x, y, w, h)
             self.detecting = False
@@ -59,6 +81,12 @@ class StickDetector(QThread):
         assert self.stored_frames >= self.required_frames, "You cannot require more than you store!"
         
         self.frame_thresholds = deque([], maxlen=self.stored_frames)
+        
+        # we need to update the labels (if we can)
+        try:
+            self._update_labels()
+        except:
+            pass
 
     def _save_aoi(self):
         parser = configparser.ConfigParser()
@@ -219,8 +247,6 @@ class StickDetector(QThread):
             # call the old callback
             self.mouse_callback(ev_ty, x, y, None, None)
             
-            # after some input we update our labels
-            self._update_labels()
             return True
         elif event.type() == QEvent.Type.KeyPress:
             kv = QKeyEvent(event)
@@ -228,9 +254,6 @@ class StickDetector(QThread):
                 self.keyboard_callback(chr(kv.key()))
             except:
                 pass
-            
-            # after some input we update our labels
-            self._update_labels()
             return True
         else:
             return False
@@ -243,11 +266,11 @@ class StickDetector(QThread):
             # Restart detection after pressing 'd'
             if self.aoi is None:
                 print("Error: No AOI selected. Please select an AOI first.")
-            self.prev_aoi = None  # Reset previous AOI
-            self.detecting = True
-            print("Detection restarted.")
-        elif key == "r":
-            # Reset Spot Arm
+            self.prev_aoi = None # Reset previous AOI
+            self.detecting = not self.detecting
+            print("Detection toggled.")
+        elif key == 'r':
+            # Reset Spot Arm                    
             if self.check_connection() is True:
                 self.spot_arm.stand()
                 self.spot_arm.open_gripper_at_angle(35)
@@ -276,17 +299,21 @@ class StickDetector(QThread):
                     self.stick_state = "Dropped"
                 elif self.stick_state == "Dropped":
                     self.stick_state = "Raised"
-                print("Dropped stick.")
+                print(f"Dropped stick.")
         elif key == "2":
             if self.holder:
                 self.holder.pullup()
-                print("Initiated stick pull up.")
+                print("Initiated stick pull up to {self.stick_state}.")
         elif key == 't':
             self._save_aoi()
             print("Saved current aoi.")
         elif key == 'z':
             self._reload_settings(self.reloadable_config)
             print("Reloaded current config.")
+        
+        # after some input we update our labels
+        self._update_labels()
+
 
     def mouse_callback(self, event, x, y, flags, param):
         """Handle mouse events for AOI selection"""
@@ -323,6 +350,8 @@ class StickDetector(QThread):
                 self.detecting = True
                 self.prev_aoi = None  # Reset previous AOI for new selection
                 print("Starting Stick Detection...")
+        # after some input we update our labels
+        self._update_labels()
 
     def draw_status_tag(self, frame, x, y, status_tag="", bg_color=(0, 0, 0)):
         """Draw status tag above the AOI or at top-left corner"""

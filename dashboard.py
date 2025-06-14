@@ -1,14 +1,9 @@
-import cv2
-import configparser
-import time
 import sys
 # import threading
-import numpy as np
-from skimage.metrics import structural_similarity as ssim
-from PySide6.QtGui import QIcon, QPixmap, QImage, QGuiApplication
-from PySide6.QtCore import QThread, Signal, Slot, Qt, QEvent
+from PySide6.QtGui import QPixmap, QImage
+from PySide6.QtCore import QThread, Slot, Qt
 from PySide6.QtQuickControls2 import QQuickStyle
-from PySide6.QtWidgets import QLabel, QWidget, QApplication, QGridLayout, QMainWindow, QSizePolicy, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QApplication, QMainWindow, QStyle, QPushButton
 from PySide6.QtUiTools import QUiLoader
 
 from stick_detection import StickDetector
@@ -38,7 +33,9 @@ class GuiContainer(QMainWindow):
         self.setCentralWidget(self.window)
         
         # handle all the buttons
+        self.window.detection_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
         self.window.reset_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('r'))
+        self.window.reset_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
         self.window.open_full_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('o'))
         self.window.sit_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('s'))
         self.window.close_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('c'))
@@ -46,7 +43,24 @@ class GuiContainer(QMainWindow):
         
         self.window.save_aoi_btn.clicked.connect(lambda: self.runner_thread._save_aoi())
         self.window.reload_cfg_btn.clicked.connect(lambda: self.runner_thread._reload_settings(self.runner_thread.reloadable_config))
-            
+    
+    def _dynamic_btn_sizer(self, btn : QPushButton):
+        font = btn.font()
+        height = btn.height()
+        font.setPixelSize(int(height * 0.5))
+        btn.setFont(font)
+        
+        icon_size = btn.iconSize()
+        icon_size.scale(10000, int(height * 0.6), Qt.AspectRatioMode.KeepAspectRatio)
+        btn.setIconSize(icon_size)
+
+    
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        for btn in dir(self.window):
+            if isinstance(getattr(self.window, btn), QPushButton):
+                self._dynamic_btn_sizer(getattr(self.window, btn))
+    
     @Slot(QImage)
     def setImage(self, image : QImage):
         #update image

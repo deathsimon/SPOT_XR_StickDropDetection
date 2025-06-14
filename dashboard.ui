@@ -70,53 +70,118 @@
       </widget>
      </item>
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="6,1,1,1">
+      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="8,10,1,1,1">
        <item>
-        <layout class="QGridLayout" name="gridLayout">
-         <item row="4" column="0">
-          <widget class="QPushButton" name="sit_btn">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QPushButton" name="detection_btn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
-            <string>Sit</string>
+            <string>Start Detection</string>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QPushButton" name="open_full_btn">
-           <property name="text">
-            <string>Open Gripper</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
+         <item>
           <widget class="QPushButton" name="drop_stick_button">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Drop Stick (dyn)</string>
            </property>
           </widget>
          </item>
-         <item row="7" column="0">
-          <widget class="QPushButton" name="save_aoi_btn">
+         <item>
+          <widget class="QPushButton" name="reset_btn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
-            <string>Save AOI</string>
+            <string>Reset</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_8">
+         <item>
           <widget class="QPushButton" name="close_btn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Close</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="0">
-          <widget class="QPushButton" name="reset_btn">
+         <item>
+          <widget class="QPushButton" name="save_aoi_btn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
-            <string>&amp;Reset</string>
+            <string>Save AOI</string>
            </property>
           </widget>
          </item>
-         <item row="8" column="0">
+         <item>
+          <widget class="QPushButton" name="sit_btn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Sit</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="open_full_btn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Open Gripper</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="reload_cfg_btn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Reload Config</string>
            </property>
