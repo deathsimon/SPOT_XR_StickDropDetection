@@ -226,17 +226,17 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_4">
      <item>
-      <widget class="QWebView" name="webView">
-       <property name="url">
+      <widget class="QWebEngineView" name="webView" native="true">
+       <property name="url" stdset="0">
         <url>
-         <string>about:blank</string>
+         <string/>
         </url>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QWebView" name="webView_2">
-       <property name="url">
+      <widget class="QWebEngineView" name="webView_2" native="true">
+       <property name="url" stdset="0">
         <url>
          <string>about:blank</string>
         </url>
@@ -249,9 +249,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QWebView</class>
+   <class>QWebEngineView</class>
    <extends>QWidget</extends>
-   <header location="global">QtWebKitWidgets/QWebView</header>
+   <header>qwebengineview.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
