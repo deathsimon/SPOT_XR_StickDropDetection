@@ -165,9 +165,22 @@ class StickDetector(QThread):
         self.last_frame = None
         self.last_movement = deque(maxlen=1)
         self.total = 0
-        
+        self.stick_dropped = False
+        self.stick_drop_command_time = None
+
+        if config["Settings"].get("aoi", None):
+            aoi_parts = config["Settings"].get("aoi").split(",")
+            if len(aoi_parts) == 4:
+                self.aoi = tuple([int(part) for part in aoi_parts])
+                print(f"will be using AOI: {self.aoi}")
+            else:
+                print("Error: AOI could not be initialized! Please check format")
+
         # read the reloadable configs
         self._reload_settings(reloadable_config)
+        self.stick_dropped = False
+        self.stick_drop_command_time = None
+
 
         # Initialize video capture
         if self.video_source == "RTSP":
@@ -288,15 +301,16 @@ class StickDetector(QThread):
                 self.spot_arm.close_gripper()
                 print("Spot: Arm gripper closed.")
         elif key == "1":
-            if self.holder:
+            if self.holder and not self.stick_dropped:
+                self.stick_dropped = True
+                self.stick_drop_command_time = time.time()
                 self.holder.drop()
-                self.stick_state = "Dropped"
-                print(f"Dropped stick.")
+                print("Dropped stick.")
         elif key == "2":
-            if self.holder:
+            if self.holder and self.stick_dropped:
+                self.stick_drop_command_time = None
                 self.holder.pullup()
-                self.stick_state = "Raised"
-                print(f"Raised Stick.")
+                print("Initiated stick pull up.")
         elif key == 't':
             self._save_aoi()
             print("Saved current aoi.")
@@ -535,6 +549,8 @@ class StickDetector(QThread):
                     print("Did Spot catch the stick?")
                 # self.send_ws_signal(0x2d) # Send signal
                 self.detecting = False  # Stop detection after drop
+        else :
+            return changes
 
 
 
@@ -662,16 +678,19 @@ class StickDetector(QThread):
                 if self.aoi and self.prev_aoi is None:
                     x, y, w, h = self.aoi
                     self.prev_aoi = frame[y : y + h, x : x + w].copy()
-
+                    
                 # Perform detection
                 if self.detecting:
                     # Check for drop
                     start_time = time.time()
-                    self.check_drop(frame)
+                    changes = self.check_drop(frame)
                     # self.check_drop_cni(frame)
                     end_time = time.time()
-                    # if self.verbose:
-                    #    print(f"Drop Check Time: {((end_time - start_time)*1e3):.3f} ms")
+                    if self.verbose and changes == True:
+                        print(f"Drop Check Time: {((end_time - start_time)*1e3):.3f} ms")
+                        if self.stick_drop_command_time:
+                            print(f"Elapsed time since drop command: { ((end_time - self.stick_drop_command_time)*1e3):.3f} ms")
+                        print(f"With AOI: {self.aoi}")
 
                 # Draw AOI rectangle if selecting or selected
                 if self.selecting_aoi and self.start_point and self.end_point:
