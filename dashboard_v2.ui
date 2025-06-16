@@ -27,14 +27,23 @@
         padding: 5px;
         color: white;
         }
-        QFrame {
+        QFrame{
         background-color: rgba(45, 47, 66, 0.7);
         border-radius: 10px;
+        padding: 5px;
+        }
+        QFrame.contentFrame{
         border-color: white;
         border-width: 1px;
         border-style: solid;
-        padding: 5px;
-        }</string>
+        }
+        QPushButton {
+          border-color: white;
+          border-width: 1px;
+          border-style: solid;
+        }
+      
+      </string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="bodyLayout" stretch="0,0">
@@ -42,27 +51,54 @@
      <layout class="QHBoxLayout" name="headerLayout"/>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,6">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,6">
       <item>
-       <layout class="QVBoxLayout" name="leftPanel" stretch="0,0">
+       <layout class="QVBoxLayout" name="leftPanel" stretch="0">
+        <property name="spacing">
+         <number>6</number>
+        </property>
         <property name="sizeConstraint">
          <enum>QLayout::SetFixedSize</enum>
         </property>
         <property name="leftMargin">
          <number>0</number>
         </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
         <item>
          <widget class="QFrame" name="statusFrame">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
           <property name="frameShape">
            <enum>QFrame::StyledPanel</enum>
           </property>
-          <layout class="QVBoxLayout" name="statusLayout">
+          <property name="midLineWidth">
+           <number>-3</number>
+          </property>
+          <property name="class" stdset="0">
+           <string>contentFrame</string>
+          </property>
+          <layout class="QVBoxLayout" name="statusLayout" stretch="1,1,1,1,10">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>9</number>
+           </property>
            <item>
             <widget class="QWebEngineView" name="headerView" native="true">
              <property name="sizePolicy">
@@ -91,7 +127,7 @@
              </property>
              <property name="url" stdset="0">
               <url>
-               <string>http://kn-adrz-vsting.local:3000/d/OcbF9A3Wk/robot-overview?&amp;orgId=1&amp;var-robot=husky&amp;panelId=34&amp;fullscreen&amp;kiosk=tv</string>
+               <string>http://kn-adrz-vsting.local:3000/d/CkIkS6LHz/falling-rod-demo?orgId=1&amp;panelId=4&amp;fullscreen&amp;kiosk</string>
               </url>
              </property>
             </widget>
@@ -112,414 +148,167 @@
               </font>
              </property>
              <property name="text">
-              <string>Status</string>
+              <string>Network Scheduling Status</string>
              </property>
             </widget>
            </item>
            <item>
-            <layout class="QGridLayout" name="statusGrid" rowstretch="0,0,0,0">
-             <item row="0" column="0">
-              <widget class="QLabel" name="spotLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Spot</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLabel" name="rodStatus">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="styleSheet">
-                <string>background-color: #90BE6D;</string>
-               </property>
-               <property name="text">
-                <string>READY</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="networkLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Network</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="rodLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Rod</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="fallDetectionLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Fall Detection</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QLabel" name="fallDetectionStatus">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="styleSheet">
-                <string>background-color: #90BE6D;</string>
-               </property>
-               <property name="text">
-                <string>DETECTING</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="spotStatus">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="styleSheet">
-                <string>background-color: #90BE6D;</string>
-               </property>
-               <property name="text">
-                <string>CONNECTED</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QLabel" name="networkStatus">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="styleSheet">
-                <string>background-color: #90BE6D;</string>
-               </property>
-               <property name="text">
-                <string>STATIC</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QFrame" name="controlsFrame">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="baseSize">
-           <size>
-            <width>253</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <layout class="QVBoxLayout" name="controlsLayout" stretch="0,0,0,0,0,0,0,0,0">
-           <property name="spacing">
-            <number>6</number>
-           </property>
-           <property name="leftMargin">
-            <number>9</number>
-           </property>
-           <property name="topMargin">
-            <number>9</number>
-           </property>
-           <property name="rightMargin">
-            <number>9</number>
-           </property>
-           <property name="bottomMargin">
-            <number>9</number>
-           </property>
-           <item>
-            <widget class="QLabel" name="controlsLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="baseSize">
-              <size>
-               <width>223</width>
-               <height>31</height>
-              </size>
-             </property>
+            <widget class="QLabel" name="label">
              <property name="font">
               <font>
-               <pointsize>12</pointsize>
+               <pointsize>16</pointsize>
                <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: #90BE6D;</string>
+             </property>
              <property name="text">
-              <string>Controls</string>
+              <string>Predictive</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::AutoText</enum>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="fallDetectionControlLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Fall Detection</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="fallDetectionButtons">
-             <item>
-              <widget class="QPushButton" name="detectionStart_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
+            <layout class="QGridLayout" name="statusGrid" rowstretch="0,0,0">
+             <item row="2" column="0">
+              <widget class="QPushButton" name="pushButton_2">
                <property name="text">
-                <string>Start</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="detectionstop_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Suspend</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QLabel" name="networkSchedulingLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Network Scheduling</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="networkButtons">
-             <item>
-              <widget class="QPushButton" name="networkStatic_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Static</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="networkReactive_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Reactive</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="networkPredictive_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Predictive</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QLabel" name="stickHolderLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Stick Holder</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="stickHolderButtons">
-             <item>
-              <widget class="QPushButton" name="dropStick_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Drop Stick</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="raiseStick_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Raise Stick</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QLabel" name="spotControlLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Spot</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QGridLayout" name="spotButtons">
-             <item row="0" column="0">
-              <widget class="QPushButton" name="gripperOpen_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Open Gripper</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QPushButton" name="gripperClose_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Close Gripper</string>
+                <string>Predictive Scheduling</string>
                </property>
               </widget>
              </item>
              <item row="1" column="0">
-              <widget class="QPushButton" name="sitStand_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
+              <widget class="QPushButton" name="pushButton">
                <property name="text">
-                <string>Sit / Stand</string>
+                <string>Reactive scheduling</string>
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <widget class="QPushButton" name="spotReady_btn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
+             <item row="0" column="0">
+              <widget class="Line" name="line">
+               <property name="palette">
+                <palette>
+                 <active>
+                  <colorrole role="Button">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>255</red>
+                     <green>255</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                  <colorrole role="Base">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>255</red>
+                     <green>255</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                  <colorrole role="Window">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>255</red>
+                     <green>255</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                 </active>
+                 <inactive>
+                  <colorrole role="Button">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>255</red>
+                     <green>255</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                  <colorrole role="Base">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>255</red>
+                     <green>255</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                  <colorrole role="Window">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>255</red>
+                     <green>255</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                 </inactive>
+                 <disabled>
+                  <colorrole role="Button">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>255</red>
+                     <green>255</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                  <colorrole role="Base">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>255</red>
+                     <green>255</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                  <colorrole role="Window">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>255</red>
+                     <green>255</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                 </disabled>
+                </palette>
                </property>
-               <property name="text">
-                <string>Get Ready</string>
+               <property name="styleSheet">
+                <string notr="true">background-color: white;</string>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
             </layout>
+           </item>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Expanding</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
            </item>
           </layout>
          </widget>
@@ -532,6 +321,9 @@
          <widget class="QFrame" name="videoFrame">
           <property name="frameShape">
            <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="class" stdset="0">
+           <string>contentFrame</string>
           </property>
           <layout class="QVBoxLayout" name="videoLayout" stretch="0">
            <item>
@@ -557,6 +349,9 @@
          <widget class="QFrame" name="metricsFrame">
           <property name="frameShape">
            <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="class" stdset="0">
+           <string>contentFrame</string>
           </property>
           <layout class="QVBoxLayout" name="metricsLayout">
            <item>
@@ -588,7 +383,7 @@
                  <widget class="QWebEngineView" name="latencycurrent_view" native="true">
                   <property name="url" stdset="0">
                    <url>
-                    <string>http://kn-adrz-vsting.local:3000/d-solo/EvwR7QcGk/vsting?orgId=1&amp;from=now-5m&amp;to=now&amp;panelId=2&amp;fullscreen&amp;kiosk=tv</string>
+                    <string>http://kn-adrz-vsting.local:3000/dashboard/new?orgId=1&amp;folderId=8&amp;panelId=2&amp;fullscreen&amp;kiosk=tv</string>
                    </url>
                   </property>
                  </widget>
