@@ -17,7 +17,7 @@ class GuiContainer(QMainWindow):
         
         # load from file
         loader = QUiLoader()
-        self.window : QWidget = loader.load("dashboard.ui", None)
+        self.window : QWidget = loader.load("dashboard_v2.ui", None)
         
         # create the detection thread
         self.runner_thread = StickDetector(self, config_file="config")
@@ -33,7 +33,7 @@ class GuiContainer(QMainWindow):
         self.setCentralWidget(self.window)
         
         # handle all the buttons
-        self.window.detection_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
+        self.window.detectionStart_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
         self.window.reset_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('r'))
         self.window.reset_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
         self.window.open_full_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('o'))
