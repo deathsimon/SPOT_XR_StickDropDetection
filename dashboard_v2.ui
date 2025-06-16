@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1280</width>
-    <height>720</height>
+    <height>725</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -96,13 +96,6 @@
            </item>
            <item>
             <layout class="QGridLayout" name="statusGrid">
-             <item row="3" column="0">
-              <widget class="QLabel" name="videoLabel">
-               <property name="text">
-                <string>Video</string>
-               </property>
-              </widget>
-             </item>
              <item row="0" column="0">
               <widget class="QLabel" name="spotLabel">
                <property name="text">
@@ -123,13 +116,34 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="1">
-              <widget class="QLabel" name="networkStatus">
+             <item row="2" column="0">
+              <widget class="QLabel" name="networkLabel">
+               <property name="text">
+                <string>Network</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="rodLabel">
+               <property name="text">
+                <string>Rod</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="fallDetectionLabel">
+               <property name="text">
+                <string>Fall Detection</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLabel" name="fallDetectionStatus">
                <property name="styleSheet">
                 <string>background-color: #90BE6D;</string>
                </property>
                <property name="text">
-                <string>STATIC</string>
+                <string>DETECTING</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -149,50 +163,16 @@
                </property>
               </widget>
              </item>
-             <item row="4" column="1">
-              <widget class="QLabel" name="fallDetectionStatus">
+             <item row="2" column="1">
+              <widget class="QLabel" name="networkStatus">
                <property name="styleSheet">
                 <string>background-color: #90BE6D;</string>
                </property>
                <property name="text">
-                <string>DETECTING</string>
+                <string>STATIC</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QLabel" name="videoStatus">
-               <property name="styleSheet">
-                <string>background-color: #90BE6D;</string>
-               </property>
-               <property name="text">
-                <string>30 fps</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="rodLabel">
-               <property name="text">
-                <string>Rod</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="networkLabel">
-               <property name="text">
-                <string>Network</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0">
-              <widget class="QLabel" name="fallDetectionLabel">
-               <property name="text">
-                <string>Fall Detection</string>
                </property>
               </widget>
              </item>
@@ -422,7 +402,7 @@
            <item>
             <widget class="QLabel" name="video_stream">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <sizepolicy hsizetype="Ignored" vsizetype="Maximum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -470,13 +450,11 @@
                </property>
                <layout class="QVBoxLayout" name="currentLatencyLayout">
                 <item>
-                 <widget class="QLabel" name="currentLatencyLabel">
-                  <property name="text">
-                   <string>Current Latency
-                                    (Webview)</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
+                 <widget class="QWebEngineView" name="latencycurrent_view" native="true">
+                  <property name="url" stdset="0">
+                   <url>
+                    <string>http://kn-adrz-vsting.local:3000/d-solo/EvwR7QcGk/vsting?orgId=1&amp;from=now-5m&amp;to=now&amp;panelId=2&amp;fullscreen&amp;kiosk=tv</string>
+                   </url>
                   </property>
                  </widget>
                 </item>
@@ -493,13 +471,11 @@
                </property>
                <layout class="QVBoxLayout" name="latencyHistoryLayout">
                 <item>
-                 <widget class="QLabel" name="latencyHistoryLabel">
-                  <property name="text">
-                   <string>Latency History
-                                    (Webview)</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
+                 <widget class="QWebEngineView" name="latencyhistory_view" native="true">
+                  <property name="url" stdset="0">
+                   <url>
+                    <string>http://kn-adrz-vsting.local:3000/d-solo/EvwR7QcGk/vsting?orgId=1&amp;from=now-5m&amp;to=now&amp;panelId=2&amp;fullscreen&amp;kiosk=tv</string>
+                   </url>
                   </property>
                  </widget>
                 </item>
@@ -518,6 +494,13 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QWebEngineView</class>
+   <extends>QWidget</extends>
+   <header>qwebengineview.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

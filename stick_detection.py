@@ -19,42 +19,28 @@ class StickDetector(QThread):
     def _update_labels(self):
         # handle labels to display status
         window: QWidget = self.parent().window
-        
-        font_green = r'<font face="sans" color="#009900" size="5">'
-        font_red = r'<font face="sans" color="#990000" size="5">'
-        font_blue = r'<font face="sans" color="#000099" size="4">'
-        sheet = "text-align: right;"
         if self.detecting:
-            window.detection_status.setText(
-                f"{font_green}<i>Detecting</i></font>"
-                )
-            window.detection_btn.setText("Stop")
-            window.detection_btn.setIcon(window.style().standardIcon(QStyle.SP_MediaStop))
-            
-            # self._dynamic_btn_sizer(window.detection_btn)
+            window.fallDetectionStatus.setText("ACTIVE")
+            window.fallDetectionStatus.setStyleSheet("background-color: #90BE6D;")
         else:
-            window.detection_status.setText(
-                f"{font_red}<i>Not Detecting</i></font>"
-                )
-            window.detection_btn.setText("Start")
-            # window.detection_btn.setStyleSheet(sheet)
-            window.detection_btn.setIcon(window.style().standardIcon(QStyle.SP_MediaPlay))
+            window.fallDetectionStatus.setText("INACTIVE")
+            window.fallDetectionStatus.setStyleSheet("background-color: #ff0000;")
         
         if self.stick_state == "Raised":
-            window.drop_stick_button.setText("Drop")
-            window.drop_stick_button.setIcon(window.style().standardIcon(QStyle.SP_ArrowDown))
-            window.drop_stick_button.clicked.connect(lambda: self.keyboard_callback('1'))
-            window.dropped_status.setText(f"{font_green}Stick is: <i>{self.stick_state}</i></font>")
+            window.rodStatus.setText("RAISED")
+            window.rodStatus.setStyleSheet("background-color: #90BE6D;")
         elif self.stick_state == "Dropped":
-            window.drop_stick_button.setText("Raise")
-            window.drop_stick_button.setIcon(window.style().standardIcon(QStyle.SP_ArrowUp))
-            window.drop_stick_button.clicked.connect(lambda: self.keyboard_callback('2'))
-            window.dropped_status.setText(f"{font_red}Stick is: <i>{self.stick_state}</i></font>")
+            window.rodStatus.setText("DROPPED")
+            window.rodStatus.setStyleSheet("background-color: #ff0000;")
         else:
-            window.drop_stick_button.setText("No Stick")
-            window.drop_stick_button.setEnabled(False)
+            pass
         
-        window.aoi_string.setText(f"{font_blue}AOI:<br><i>{self.aoi}</i></font>")
+        if self.spot_arm:
+            window.spotStatus.setText("CONNECTED")
+            window.spotStatus.setStyleSheet("background-color: #90BE6D;")
+        else:
+            window.spotStatus.setText("DISCONNECTED")
+            window.spotStatus.setStyleSheet("background-color: #ff0000;")
 
     
     def _reload_settings(self, path: str):

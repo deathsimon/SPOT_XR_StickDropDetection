@@ -34,15 +34,17 @@ class GuiContainer(QMainWindow):
         
         # handle all the buttons
         self.window.detectionStart_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
-        self.window.reset_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('r'))
-        self.window.reset_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
-        self.window.open_full_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('o'))
-        self.window.sit_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('s'))
-        self.window.close_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('c'))
-        self.window.drop_stick_button.clicked.connect(lambda: self.runner_thread.keyboard_callback('1'))
+        self.window.detectionstop_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
+        self.window.spotReady_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('r'))
+        # self.window.reset_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        self.window.gripperOpen_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('o'))
+        self.window.gripperClose_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('c'))
+        self.window.sitStand_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('s'))
+        self.window.dropStick_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('1'))
+        self.window.raiseStick_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('2'))
         
-        self.window.save_aoi_btn.clicked.connect(lambda: self.runner_thread._save_aoi())
-        self.window.reload_cfg_btn.clicked.connect(lambda: self.runner_thread._reload_settings(self.runner_thread.reloadable_config))
+        # self.window.save_aoi_btn.clicked.connect(lambda: self.runner_thread._save_aoi())
+        # self.window.reload_cfg_btn.clicked.connect(lambda: self.runner_thread._reload_settings(self.runner_thread.reloadable_config))
     
     def _dynamic_btn_sizer(self, btn : QPushButton):
         font = btn.font()
