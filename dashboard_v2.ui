@@ -37,35 +37,58 @@
         }</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="bodyLayout">
+   <layout class="QVBoxLayout" name="bodyLayout" stretch="1,10">
     <item>
      <layout class="QHBoxLayout" name="headerLayout">
       <item>
-       <widget class="QGraphicsView" name="tuLogo"/>
-      </item>
-      <item>
-       <widget class="QGraphicsView" name="cniLogo"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="title">
-        <property name="text">
-         <string>Real-time Networked Robotics Control with Embedded ROS2</string>
+       <widget class="QWebEngineView" name="headerView" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>80</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>80</height>
+         </size>
+        </property>
+        <property name="baseSize">
+         <size>
+          <width>0</width>
+          <height>80</height>
+         </size>
+        </property>
+        <property name="url" stdset="0">
+         <url>
+          <string>http://kn-adrz-vsting.local:3000/d/OcbF9A3Wk/robot-overview?&amp;orgId=1&amp;var-robot=husky&amp;panelId=34&amp;fullscreen&amp;kiosk=tv</string>
+         </url>
         </property>
        </widget>
-      </item>
-      <item>
-       <widget class="QGraphicsView" name="gemLogo"/>
       </item>
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,5">
       <item>
-       <layout class="QVBoxLayout" name="leftPanel" stretch="0,0,0,0">
+       <layout class="QVBoxLayout" name="leftPanel" stretch="0,0">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetFixedSize</enum>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
         <item>
          <widget class="QFrame" name="statusFrame">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -77,7 +100,7 @@
            <item>
             <widget class="QLabel" name="statusLabel">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -95,9 +118,15 @@
             </widget>
            </item>
            <item>
-            <layout class="QGridLayout" name="statusGrid">
+            <layout class="QGridLayout" name="statusGrid" rowstretch="0,0,0,0">
              <item row="0" column="0">
               <widget class="QLabel" name="spotLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Spot</string>
                </property>
@@ -105,6 +134,12 @@
              </item>
              <item row="1" column="1">
               <widget class="QLabel" name="rodStatus">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="styleSheet">
                 <string>background-color: #90BE6D;</string>
                </property>
@@ -118,6 +153,12 @@
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="networkLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Network</string>
                </property>
@@ -125,6 +166,12 @@
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="rodLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Rod</string>
                </property>
@@ -132,6 +179,12 @@
              </item>
              <item row="3" column="0">
               <widget class="QLabel" name="fallDetectionLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Fall Detection</string>
                </property>
@@ -139,6 +192,12 @@
              </item>
              <item row="3" column="1">
               <widget class="QLabel" name="fallDetectionStatus">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="styleSheet">
                 <string>background-color: #90BE6D;</string>
                </property>
@@ -152,6 +211,12 @@
              </item>
              <item row="0" column="1">
               <widget class="QLabel" name="spotStatus">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="styleSheet">
                 <string>background-color: #90BE6D;</string>
                </property>
@@ -165,6 +230,12 @@
              </item>
              <item row="2" column="1">
               <widget class="QLabel" name="networkStatus">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="styleSheet">
                 <string>background-color: #90BE6D;</string>
                </property>
@@ -182,19 +253,6 @@
          </widget>
         </item>
         <item>
-         <spacer name="verticalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
          <widget class="QFrame" name="controlsFrame">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -202,27 +260,45 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="baseSize">
+           <size>
+            <width>253</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="frameShape">
            <enum>QFrame::StyledPanel</enum>
           </property>
           <layout class="QVBoxLayout" name="controlsLayout" stretch="0,0,0,0,0,0,0,0,0">
            <property name="spacing">
-            <number>2</number>
+            <number>6</number>
            </property>
            <property name="leftMargin">
-            <number>5</number>
+            <number>9</number>
            </property>
            <property name="topMargin">
-            <number>5</number>
+            <number>9</number>
            </property>
            <property name="rightMargin">
-            <number>5</number>
+            <number>9</number>
            </property>
            <property name="bottomMargin">
-            <number>5</number>
+            <number>9</number>
            </property>
            <item>
             <widget class="QLabel" name="controlsLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="baseSize">
+              <size>
+               <width>223</width>
+               <height>31</height>
+              </size>
+             </property>
              <property name="font">
               <font>
                <pointsize>12</pointsize>
@@ -237,6 +313,12 @@
            </item>
            <item>
             <widget class="QLabel" name="fallDetectionControlLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>Fall Detection</string>
              </property>
@@ -246,6 +328,12 @@
             <layout class="QHBoxLayout" name="fallDetectionButtons">
              <item>
               <widget class="QPushButton" name="detectionStart_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Start</string>
                </property>
@@ -253,6 +341,12 @@
              </item>
              <item>
               <widget class="QPushButton" name="detectionstop_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Suspend</string>
                </property>
@@ -262,6 +356,12 @@
            </item>
            <item>
             <widget class="QLabel" name="networkSchedulingLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>Network Scheduling</string>
              </property>
@@ -271,6 +371,12 @@
             <layout class="QHBoxLayout" name="networkButtons">
              <item>
               <widget class="QPushButton" name="networkStatic_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Static</string>
                </property>
@@ -278,6 +384,12 @@
              </item>
              <item>
               <widget class="QPushButton" name="networkReactive_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Reactive</string>
                </property>
@@ -285,6 +397,12 @@
              </item>
              <item>
               <widget class="QPushButton" name="networkPredictive_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Predictive</string>
                </property>
@@ -294,6 +412,12 @@
            </item>
            <item>
             <widget class="QLabel" name="stickHolderLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>Stick Holder</string>
              </property>
@@ -303,6 +427,12 @@
             <layout class="QHBoxLayout" name="stickHolderButtons">
              <item>
               <widget class="QPushButton" name="dropStick_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Drop Stick</string>
                </property>
@@ -310,6 +440,12 @@
              </item>
              <item>
               <widget class="QPushButton" name="raiseStick_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Raise Stick</string>
                </property>
@@ -319,6 +455,12 @@
            </item>
            <item>
             <widget class="QLabel" name="spotControlLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>Spot</string>
              </property>
@@ -328,6 +470,12 @@
             <layout class="QGridLayout" name="spotButtons">
              <item row="0" column="0">
               <widget class="QPushButton" name="gripperOpen_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Open Gripper</string>
                </property>
@@ -335,6 +483,12 @@
              </item>
              <item row="0" column="1">
               <widget class="QPushButton" name="gripperClose_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Close Gripper</string>
                </property>
@@ -342,6 +496,12 @@
              </item>
              <item row="1" column="0">
               <widget class="QPushButton" name="sitStand_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Sit / Stand</string>
                </property>
@@ -349,6 +509,12 @@
              </item>
              <item row="1" column="1">
               <widget class="QPushButton" name="spotReady_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Get Ready</string>
                </property>
@@ -358,22 +524,6 @@
            </item>
           </layout>
          </widget>
-        </item>
-        <item>
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Expanding</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
         </item>
        </layout>
       </item>
@@ -386,23 +536,9 @@
           </property>
           <layout class="QVBoxLayout" name="videoLayout">
            <item>
-            <widget class="QLabel" name="videoLabel">
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>Video</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QLabel" name="video_stream">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Ignored" vsizetype="Maximum">
+              <sizepolicy hsizetype="Ignored" vsizetype="MinimumExpanding">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
