@@ -229,7 +229,7 @@ class StickDetector(QThread):
             # remap to actual frame size
             label: QLabel = obj.window.video_stream
             pxy = label.mapFrom(self.parent().window, mv.pos())
-            x, y = pxy.x(), pxy.y()
+            x, y = pxy.x() - 8, pxy.y()
             
             # vertical center alignment, left align
             yoffset = (label.height() - label.pixmap().height()) / 2
