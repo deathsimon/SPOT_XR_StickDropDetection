@@ -1,0 +1,523 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>720</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Demo 3: Real-time Networked Robotics Control with Embedded ROS2</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow { background-color: #2B2D42; }
+        QLabel {
+        color: white;
+        }
+        QLabel[name=&quot;controlsLabel&quot;] {
+        color:
+        }
+        QPushButton {
+        background-color: #8D99AE;
+        border-radius: 5px;
+        padding: 5px;
+        color: white;
+        }
+        QFrame {
+        background-color: rgba(45, 47, 66, 0.7);
+        border-radius: 10px;
+        border-color: white;
+        border-width: 1px;
+        border-style: solid;
+        padding: 5px;
+        }</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="bodyLayout">
+    <item>
+     <layout class="QHBoxLayout" name="headerLayout">
+      <item>
+       <widget class="QGraphicsView" name="tuLogo"/>
+      </item>
+      <item>
+       <widget class="QGraphicsView" name="cniLogo"/>
+      </item>
+      <item>
+       <widget class="QLabel" name="title">
+        <property name="text">
+         <string>Real-time Networked Robotics Control with Embedded ROS2</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGraphicsView" name="gemLogo"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <layout class="QVBoxLayout" name="leftPanel" stretch="0,0,0,0">
+        <item>
+         <widget class="QFrame" name="statusFrame">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <layout class="QVBoxLayout" name="statusLayout">
+           <item>
+            <widget class="QLabel" name="statusLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Status</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="statusGrid">
+             <item row="3" column="0">
+              <widget class="QLabel" name="videoLabel">
+               <property name="text">
+                <string>Video</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="spotLabel">
+               <property name="text">
+                <string>Spot</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="rodStatus">
+               <property name="styleSheet">
+                <string>background-color: #90BE6D;</string>
+               </property>
+               <property name="text">
+                <string>READY</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLabel" name="networkStatus">
+               <property name="styleSheet">
+                <string>background-color: #90BE6D;</string>
+               </property>
+               <property name="text">
+                <string>STATIC</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="spotStatus">
+               <property name="styleSheet">
+                <string>background-color: #90BE6D;</string>
+               </property>
+               <property name="text">
+                <string>CONNECTED</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QLabel" name="fallDetectionStatus">
+               <property name="styleSheet">
+                <string>background-color: #90BE6D;</string>
+               </property>
+               <property name="text">
+                <string>DETECTING</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLabel" name="videoStatus">
+               <property name="styleSheet">
+                <string>background-color: #90BE6D;</string>
+               </property>
+               <property name="text">
+                <string>30 fps</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="rodLabel">
+               <property name="text">
+                <string>Rod</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="networkLabel">
+               <property name="text">
+                <string>Network</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="fallDetectionLabel">
+               <property name="text">
+                <string>Fall Detection</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QFrame" name="controlsFrame">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <layout class="QVBoxLayout" name="controlsLayout" stretch="0,0,0,0,0,0,0,0,0">
+           <property name="spacing">
+            <number>2</number>
+           </property>
+           <property name="leftMargin">
+            <number>5</number>
+           </property>
+           <property name="topMargin">
+            <number>5</number>
+           </property>
+           <property name="rightMargin">
+            <number>5</number>
+           </property>
+           <property name="bottomMargin">
+            <number>5</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="controlsLabel">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Controls</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="fallDetectionControlLabel">
+             <property name="text">
+              <string>Fall Detection</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="fallDetectionButtons">
+             <item>
+              <widget class="QPushButton" name="detectionStart_btn">
+               <property name="text">
+                <string>Start</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="detectionstop_btn">
+               <property name="text">
+                <string>Suspend</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QLabel" name="networkSchedulingLabel">
+             <property name="text">
+              <string>Network Scheduling</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="networkButtons">
+             <item>
+              <widget class="QPushButton" name="networkStatic_btn">
+               <property name="text">
+                <string>Static</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="networkReactive_btn">
+               <property name="text">
+                <string>Reactive</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="networkPredictive_btn">
+               <property name="text">
+                <string>Predictive</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QLabel" name="stickHolderLabel">
+             <property name="text">
+              <string>Stick Holder</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="stickHolderButtons">
+             <item>
+              <widget class="QPushButton" name="dropStick_btn">
+               <property name="text">
+                <string>Drop Stick</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="raiseStick_btn">
+               <property name="text">
+                <string>Raise Stick</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QLabel" name="spotControlLabel">
+             <property name="text">
+              <string>Spot</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="spotButtons">
+             <item row="0" column="0">
+              <widget class="QPushButton" name="gripperOpen_btn">
+               <property name="text">
+                <string>Open Gripper</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QPushButton" name="gripperClose_btn">
+               <property name="text">
+                <string>Close Gripper</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QPushButton" name="sitStand_btn">
+               <property name="text">
+                <string>Sit / Stand</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QPushButton" name="spotReady_btn">
+               <property name="text">
+                <string>Get Ready</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="rightPanel" stretch="2,1">
+        <item>
+         <widget class="QFrame" name="videoFrame">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <layout class="QVBoxLayout" name="videoLayout">
+           <item>
+            <widget class="QLabel" name="videoLabel">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Video</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="video_stream">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="styleSheet">
+              <string>background-color: black;</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="metricsFrame">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <layout class="QVBoxLayout" name="metricsLayout">
+           <item>
+            <widget class="QLabel" name="metricsLabel">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Metrics</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="metricsContent">
+             <item>
+              <widget class="QWidget" name="currentLatencyWidget" native="true">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <layout class="QVBoxLayout" name="currentLatencyLayout">
+                <item>
+                 <widget class="QLabel" name="currentLatencyLabel">
+                  <property name="text">
+                   <string>Current Latency
+                                    (Webview)</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QWidget" name="latencyHistoryWidget" native="true">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <layout class="QVBoxLayout" name="latencyHistoryLayout">
+                <item>
+                 <widget class="QLabel" name="latencyHistoryLabel">
+                  <property name="text">
+                   <string>Latency History
+                                    (Webview)</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
