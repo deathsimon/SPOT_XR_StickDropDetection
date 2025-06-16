@@ -37,46 +37,12 @@
         }</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="bodyLayout" stretch="1,10">
+   <layout class="QVBoxLayout" name="bodyLayout" stretch="0,0">
     <item>
-     <layout class="QHBoxLayout" name="headerLayout">
-      <item>
-       <widget class="QWebEngineView" name="headerView" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>80</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>80</height>
-         </size>
-        </property>
-        <property name="baseSize">
-         <size>
-          <width>0</width>
-          <height>80</height>
-         </size>
-        </property>
-        <property name="url" stdset="0">
-         <url>
-          <string>http://kn-adrz-vsting.local:3000/d/OcbF9A3Wk/robot-overview?&amp;orgId=1&amp;var-robot=husky&amp;panelId=34&amp;fullscreen&amp;kiosk=tv</string>
-         </url>
-        </property>
-       </widget>
-      </item>
-     </layout>
+     <layout class="QHBoxLayout" name="headerLayout"/>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,5">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,6">
       <item>
        <layout class="QVBoxLayout" name="leftPanel" stretch="0,0">
         <property name="sizeConstraint">
@@ -97,6 +63,39 @@
            <enum>QFrame::StyledPanel</enum>
           </property>
           <layout class="QVBoxLayout" name="statusLayout">
+           <item>
+            <widget class="QWebEngineView" name="headerView" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="baseSize">
+              <size>
+               <width>0</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="url" stdset="0">
+              <url>
+               <string>http://kn-adrz-vsting.local:3000/d/OcbF9A3Wk/robot-overview?&amp;orgId=1&amp;var-robot=husky&amp;panelId=34&amp;fullscreen&amp;kiosk=tv</string>
+              </url>
+             </property>
+            </widget>
+           </item>
            <item>
             <widget class="QLabel" name="statusLabel">
              <property name="sizePolicy">
@@ -528,13 +527,13 @@
        </layout>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="rightPanel" stretch="2,1">
+       <layout class="QVBoxLayout" name="rightPanel" stretch="3,2">
         <item>
          <widget class="QFrame" name="videoFrame">
           <property name="frameShape">
            <enum>QFrame::StyledPanel</enum>
           </property>
-          <layout class="QVBoxLayout" name="videoLayout">
+          <layout class="QVBoxLayout" name="videoLayout" stretch="0">
            <item>
             <widget class="QLabel" name="video_stream">
              <property name="sizePolicy">
