@@ -78,6 +78,9 @@ class StickDetector(QThread):
         else:
             self.drop_threshold = parser['RuntimeSettings'].getfloat("SSIM_change_threshold", 0.2)   # SSIM
         
+        self.angle_tol = parser['RuntimeSettings'].getfloat("of_angle_tolerance", 0.2)   # optical flow
+        self.magnitude_thresh = parser['RuntimeSettings'].getfloat("of_magnitude_thres", 2.5)   # optical flow
+        
         self.stored_frames = parser['RuntimeSettings'].getint("stored_frames", 1)
         self.required_frames = parser['RuntimeSettings'].getint("required_frames", 1)
         assert self.stored_frames >= self.required_frames, "You cannot require more than you store!"
@@ -474,12 +477,10 @@ class StickDetector(QThread):
         magnitude, angle = cv2.cartToPolar(flow[..., 0], flow[..., 1], angleInDegrees=False)
 
         # Create a mask for angles close to downward direction (π/2)
-        angle_tol = 0.2 # tolerance in radians (~11.5 degrees)
-        down_mask = (angle > (np.pi/2 - angle_tol)) & (angle < (np.pi/2 + angle_tol))
+        down_mask = (angle > (np.pi/2 - self.angle_tol)) & (angle < (np.pi/2 + self.angle_tol))
 
         # Optionally, threshold by magnitude to avoid noise
-        magnitude_thresh = 2.5
-        significant_motion = magnitude > magnitude_thresh
+        significant_motion = magnitude > self.magnitude_thresh
 
         # print(f"{magnitude=}")
 
