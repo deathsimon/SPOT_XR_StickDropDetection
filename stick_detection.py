@@ -19,28 +19,28 @@ class StickDetector(QThread):
     def _update_labels(self):
         # handle labels to display status
         window: QWidget = self.parent().window
-        if self.detecting:
-            window.fallDetectionStatus.setText("ACTIVE")
-            window.fallDetectionStatus.setStyleSheet("background-color: #90BE6D;")
-        else:
-            window.fallDetectionStatus.setText("INACTIVE")
-            window.fallDetectionStatus.setStyleSheet("background-color: #ff0000;")
+        # if self.detecting:
+        #     window.fallDetectionStatus.setText("ACTIVE")
+        #     window.fallDetectionStatus.setStyleSheet("background-color: #90BE6D;")
+        # else:
+        #     window.fallDetectionStatus.setText("INACTIVE")
+        #     window.fallDetectionStatus.setStyleSheet("background-color: #ff0000;")
         
-        if self.stick_state == "Raised":
-            window.rodStatus.setText("RAISED")
-            window.rodStatus.setStyleSheet("background-color: #90BE6D;")
-        elif self.stick_state == "Dropped":
-            window.rodStatus.setText("DROPPED")
-            window.rodStatus.setStyleSheet("background-color: #ff0000;")
-        else:
-            pass
+        # if self.stick_state == "Raised":
+        #     window.rodStatus.setText("RAISED")
+        #     window.rodStatus.setStyleSheet("background-color: #90BE6D;")
+        # elif self.stick_state == "Dropped":
+        #     window.rodStatus.setText("DROPPED")
+        #     window.rodStatus.setStyleSheet("background-color: #ff0000;")
+        # else:
+        #     pass
         
-        if self.spot_arm:
-            window.spotStatus.setText("CONNECTED")
-            window.spotStatus.setStyleSheet("background-color: #90BE6D;")
-        else:
-            window.spotStatus.setText("DISCONNECTED")
-            window.spotStatus.setStyleSheet("background-color: #ff0000;")
+        # if self.spot_arm:
+        #     window.spotStatus.setText("CONNECTED")
+        #     window.spotStatus.setStyleSheet("background-color: #90BE6D;")
+        # else:
+        #     window.spotStatus.setText("DISCONNECTED")
+        #     window.spotStatus.setStyleSheet("background-color: #ff0000;")
 
     
     def _reload_settings(self, path: str):
