@@ -10,8 +10,9 @@ class VStingClient:
     def shape(self, latency_ms: int, jitter_ms: int = 0):
         """Set Latency and jitter in ms"""
         try:
-            response = requests.post(f"{self.base_url}/shape", data = {
-                "delay": latency_ms, "jitter": jitter_ms
+            response = requests.post(f"{self.base_url}/shape", json = {
+                "ul": {"delay": latency_ms, "jitter": jitter_ms},
+                "dl": {"delay": latency_ms, "jitter": jitter_ms},
             })
             response.raise_for_status()
             return response.json()

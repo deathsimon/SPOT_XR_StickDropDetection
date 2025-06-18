@@ -42,6 +42,9 @@
           border-width: 1px;
           border-style: solid;
         }
+		QWebEngineView {
+			overscroll-behaviour: none;
+}
       
       </string>
   </property>
@@ -51,7 +54,7 @@
      <layout class="QHBoxLayout" name="headerLayout"/>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,6">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,6">
       <item>
        <layout class="QVBoxLayout" name="leftPanel" stretch="0">
         <property name="spacing">
@@ -69,7 +72,7 @@
         <item>
          <widget class="QFrame" name="statusFrame">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -92,7 +95,7 @@
           <property name="class" stdset="0">
            <string>contentFrame</string>
           </property>
-          <layout class="QVBoxLayout" name="statusLayout" stretch="1,1,1,1,10">
+          <layout class="QVBoxLayout" name="statusLayout" stretch="1,1,1,1,2,0">
            <property name="leftMargin">
             <number>0</number>
            </property>
@@ -102,7 +105,7 @@
            <item>
             <widget class="QWebEngineView" name="headerView" native="true">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -116,7 +119,7 @@
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>80</height>
+               <height>120</height>
               </size>
              </property>
              <property name="baseSize">
@@ -127,7 +130,7 @@
              </property>
              <property name="url" stdset="0">
               <url>
-               <string>http://kn-adrz-vsting.local:3000/d/CkIkS6LHz/falling-rod-demo?orgId=1&amp;panelId=4&amp;fullscreen&amp;kiosk</string>
+               <string>http://kn-adrz-vsting.local:3000/d/CkIkS6LHz/falling-rod-demo?orgId=1&amp;panelId=6&amp;fullscreen&amp;kiosk</string>
               </url>
              </property>
             </widget>
@@ -153,7 +156,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label">
+            <widget class="QLabel" name="schedulingLabel">
              <property name="font">
               <font>
                <pointsize>16</pointsize>
@@ -165,7 +168,7 @@
               <string notr="true">background-color: #90BE6D;</string>
              </property>
              <property name="text">
-              <string>Predictive</string>
+              <string>.</string>
              </property>
              <property name="textFormat">
               <enum>Qt::AutoText</enum>
@@ -178,14 +181,14 @@
            <item>
             <layout class="QGridLayout" name="statusGrid" rowstretch="0,0,0">
              <item row="2" column="0">
-              <widget class="QPushButton" name="pushButton_2">
+              <widget class="QPushButton" name="predictiveSched_btn">
                <property name="text">
-                <string>Predictive Scheduling</string>
+                <string>O-RACES</string>
                </property>
               </widget>
              </item>
              <item row="1" column="0">
-              <widget class="QPushButton" name="pushButton">
+              <widget class="QPushButton" name="reactiveSched_btn">
                <property name="text">
                 <string>Reactive scheduling</string>
                </property>
@@ -295,20 +298,73 @@
             </layout>
            </item>
            <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
+            <widget class="QWebEngineView" name="headerViewTULogo" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
              </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Expanding</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
+             <property name="minimumSize">
               <size>
-               <width>20</width>
-               <height>40</height>
+               <width>0</width>
+               <height>80</height>
               </size>
              </property>
-            </spacer>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>140</height>
+              </size>
+             </property>
+             <property name="baseSize">
+              <size>
+               <width>0</width>
+               <height>120</height>
+              </size>
+             </property>
+             <property name="url" stdset="0">
+              <url>
+               <string>http://kn-adrz-vsting.local:3000/d/CkIkS6LHz/falling-rod-demo?orgId=1&amp;panelId=5&amp;fullscreen&amp;kiosk</string>
+              </url>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWebEngineView" name="ministryLogo" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>160</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>180</height>
+              </size>
+             </property>
+             <property name="baseSize">
+              <size>
+               <width>0</width>
+               <height>120</height>
+              </size>
+             </property>
+             <property name="contextMenuPolicy">
+              <enum>Qt::NoContextMenu</enum>
+             </property>
+             <property name="url" stdset="0">
+              <url>
+               <string>http://kn-adrz-vsting.local:3000/d/CkIkS6LHz/falling-rod-demo?orgId=1&amp;refresh=5s&amp;panelId=7&amp;fullscreen&amp;kiosk</string>
+              </url>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -369,7 +425,7 @@
             </widget>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="metricsContent">
+            <layout class="QHBoxLayout" name="metricsContent" stretch="1,5">
              <item>
               <widget class="QWidget" name="currentLatencyWidget" native="true">
                <property name="sizePolicy">
@@ -383,7 +439,7 @@
                  <widget class="QWebEngineView" name="latencycurrent_view" native="true">
                   <property name="url" stdset="0">
                    <url>
-                    <string>http://kn-adrz-vsting.local:3000/dashboard/new?orgId=1&amp;folderId=8&amp;panelId=2&amp;fullscreen&amp;kiosk=tv</string>
+                    <string>http://kn-adrz-vsting.local:3000/d/CkIkS6LHz/falling-rod-demo?orgId=1&amp;panelId=2&amp;fullscreen&amp;kiosk</string>
                    </url>
                   </property>
                  </widget>
@@ -404,7 +460,7 @@
                  <widget class="QWebEngineView" name="latencyhistory_view" native="true">
                   <property name="url" stdset="0">
                    <url>
-                    <string>http://kn-adrz-vsting.local:3000/d-solo/EvwR7QcGk/vsting?orgId=1&amp;from=now-5m&amp;to=now&amp;panelId=2&amp;fullscreen&amp;kiosk=tv</string>
+                    <string>http://kn-adrz-vsting.local:3000/d-solo/EvwR7QcGk/vsting?orgId=1&amp;from=now-5m&amp;to=now&amp;panelId=2&amp;fullscreen&amp;kiosk</string>
                    </url>
                   </property>
                  </widget>

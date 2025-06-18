@@ -6,93 +6,17 @@ import time
 import numpy as np
 import serial
 from rodholderclient import HolderClient
-from radiodegradation import VStingClient
 
 from collections import deque
 from skimage.metrics import structural_similarity as ssim
 from PySide6.QtGui import QImage, QMouseEvent, QKeyEvent
-from PySide6.QtCore import QThread, Signal, QEvent, QObject, Qt
-from PySide6.QtWidgets import QLabel, QStyle, QWidget
+from PySide6.QtCore import QThread, Signal, QEvent, QObject
+
 
 class StickDetector(QThread):
     updateFrame = Signal(QImage)
-    
-    def _update_labels(self):
-        # handle labels to display status
-        window: QWidget = self.parent().window
-        if self.scheduling == 1:
-            window.schedulingLabel.setText("O-RACES")
-            window.schedulingLabel.setStyleSheet("background-color: #90BE6D;")
-        elif self.scheduling == 2:
-            window.schedulingLabel.setText("REACTIVE")
-            window.schedulingLabel.setStyleSheet("background-color: #ff0000;")
-        # if self.detecting:
-        #     window.fallDetectionStatus.setText("ACTIVE")
-        #     window.fallDetectionStatus.setStyleSheet("background-color: #90BE6D;")
-        # else:
-        #     window.fallDetectionStatus.setText("INACTIVE")
-        #     window.fallDetectionStatus.setStyleSheet("background-color: #ff0000;")
-        
-        # if self.stick_state == "Raised":
-        #     window.rodStatus.setText("RAISED")
-        #     window.rodStatus.setStyleSheet("background-color: #90BE6D;")
-        # elif self.stick_state == "Dropped":
-        #     window.rodStatus.setText("DROPPED")
-        #     window.rodStatus.setStyleSheet("background-color: #ff0000;")
-        # else:
-        #     pass
-        
-        # if self.spot_arm:
-        #     window.spotStatus.setText("CONNECTED")
-        #     window.spotStatus.setStyleSheet("background-color: #90BE6D;")
-        # else:
-        #     window.spotStatus.setText("DISCONNECTED")
-        #     window.spotStatus.setStyleSheet("background-color: #ff0000;")
 
-    
-    def _reload_settings(self, path: str):
-        self.reloadable_config = path
-        
-        parser = configparser.ConfigParser()
-        parser.read(path)
-        
-        aoi_str = parser['RuntimeSettings'].get("aoi", "None")
-        if aoi_str != "None":
-            self.aoi = tuple(int(x) for x in aoi_str.removeprefix('(').removesuffix(')').split(','))
-            print(f"Set AOI from config to: {self.aoi}")
-            self.detecting = False
-        else:        
-            self.aoi = None  # Area of interest: (x, y, w, h)
-            self.detecting = False
-
-        self.fall_detection = parser['RuntimeSettings'].getint("fall_detection_method", 0) # Fall detection method
-        if self.fall_detection == 0:
-            self.drop_threshold = parser['RuntimeSettings'].getint("MSE_threshold", 100)   # Pixels
-        else:
-            self.drop_threshold = parser['RuntimeSettings'].getfloat("SSIM_change_threshold", 0.2)   # SSIM
-        
-        self.angle_tol = parser['RuntimeSettings'].getfloat("of_angle_tolerance", 0.2)   # optical flow
-        self.magnitude_thresh = parser['RuntimeSettings'].getfloat("of_magnitude_thres", 2.5)   # optical flow
-        
-        self.stored_frames = parser['RuntimeSettings'].getint("stored_frames", 1)
-        self.required_frames = parser['RuntimeSettings'].getint("required_frames", 1)
-        assert self.stored_frames >= self.required_frames, "You cannot require more than you store!"
-        
-        self.frame_thresholds = deque([], maxlen=self.stored_frames)
-        
-        # we need to update the labels (if we can)
-        try:
-            self._update_labels()
-        except:
-            pass
-
-    def _save_aoi(self):
-        parser = configparser.ConfigParser()
-        parser.read(self.reloadable_config)
-        parser.set("RuntimeSettings", "aoi", str(self.aoi))
-        parser.write(open(self.reloadable_config, "w"))
-    
-    def __init__(self, parent, config_file="config", reloadable_config="hot_load_config"):
+    def __init__(self, parent, config_file="config"):
         # handle Qt
         QThread.__init__(self, parent)
 
@@ -136,17 +60,10 @@ class StickDetector(QThread):
             "You cannot require more than you store!"
         )
 
-        if config["Settings"].getboolean("use_stick_ws", True):
-            self.holder = HolderClient(
-                host=config["Settings"].get("holderhost", "localhost"),
-                port=config["Settings"].get("holderport", 8000)
-            )
-            self.stick_state = "Raised"
-        else:
-            self.stick_state = "???"
-            print("Stick holder is disabled")
-
-        self.vsting = VStingClient()
+        self.holder = HolderClient(
+            host=config["Settings"].get("holderhost", "localhost"),
+            port=config["Settings"].get("holderport", 8000)
+        )
 
         # Initialize shared variables
         self.frame = None  # Latest frame from video stream
@@ -155,6 +72,7 @@ class StickDetector(QThread):
         self.frame_thresholds = deque([], maxlen=self.stored_frames)
         self.running = False
         self.detecting = False
+        self.aoi = None  # Area of interest: (x, y, w, h)
         self.prev_aoi = None  # Previous AOI image for comparison
         self.prev_aoi_2 = None  # Previous AOI image for optical flow comparison
         self.selecting_aoi = False  # Flag for AOI selection
@@ -165,7 +83,6 @@ class StickDetector(QThread):
         self.total = 0
         self.stick_dropped = False
         self.stick_drop_command_time = None
-        self.scheduling = 0
 
         if config["Settings"].get("aoi", None):
             aoi_parts = config["Settings"].get("aoi").split(",")
@@ -174,10 +91,6 @@ class StickDetector(QThread):
                 print(f"will be using AOI: {self.aoi}")
             else:
                 print("Error: AOI could not be initialized! Please check format")
-
-        # read the reloadable configs
-        self._reload_settings(reloadable_config)
-
 
         # Initialize video capture
         if self.video_source == "RTSP":
@@ -213,12 +126,8 @@ class StickDetector(QThread):
         except ConnectionError as e:
             print(f"Warning: {e}")
             self.spot_arm = None
-        
-        # update labels of the dashboards
-        self._update_labels()
 
-
-    def eventFilter(self, obj : QObject, event : QEvent):
+    def eventFilter(self, obj: QObject, event: QEvent):
         event_map = {
             QEvent.Type.MouseButtonPress: cv2.EVENT_LBUTTONDOWN,
             QEvent.Type.MouseMove: cv2.EVENT_MOUSEMOVE,
@@ -227,23 +136,11 @@ class StickDetector(QThread):
         ev_ty = event_map.get(event.type(), None)
         if ev_ty is not None:
             mv = QMouseEvent(event)
-            if mv.button() == Qt.MouseButton.RightButton:
-                self.aoi = None
-                self.detecting = False
-                # after some input we update our labels
-                self._update_labels()
-                return True
+            x, y = mv.x(), mv.y()
 
             # remap to actual frame size
-            label: QLabel = obj.window.video_stream
-            pxy = label.mapFrom(self.parent().window, mv.pos())
-            x, y = pxy.x() - 8, pxy.y()
-            
-            # vertical center alignment, left align
-            yoffset = (label.height() - label.pixmap().height()) / 2
-            y = int(y - yoffset)
-            
-            # transform to opencv frame size
+            x -= obj.window.video_stream.geometry().x()
+            y -= obj.window.video_stream.geometry().y()
             w, h = obj.scaled_width, obj.scaled_height
             fw, fh = obj.frame_width, obj.frame_height
             x = int(x * (fw / w))
@@ -251,7 +148,6 @@ class StickDetector(QThread):
 
             # call the old callback
             self.mouse_callback(ev_ty, x, y, None, None)
-            
             return True
         elif event.type() == QEvent.Type.KeyPress:
             kv = QKeyEvent(event)
@@ -265,17 +161,20 @@ class StickDetector(QThread):
 
     def keyboard_callback(self, key: str):
         key = key.lower()
-        if key == 'q':
-            print("WARN: Close via window!")
-        elif key == 'd':
+        if key == "q":
+            # Check for quit key
+            self.running = False
+            quit()
+        elif key == "d":
             # Restart detection after pressing 'd'
             if self.aoi is None:
                 print("Error: No AOI selected. Please select an AOI first.")
-            self.prev_aoi = None # Reset previous AOI
-            self.detecting = not self.detecting
-            print("Detection toggled.")
-        elif key == 'r':
-            # Reset Spot Arm                    
+            self.prev_aoi = None  # Reset previous AOI
+            self.stick_dropped = False
+            self.detecting = True
+            print("Detection restarted.")
+        elif key == "r":
+            # Reset Spot Arm
             if self.check_connection() is True:
                 self.spot_arm.stand()
                 self.spot_arm.open_gripper_at_angle(35)
@@ -290,9 +189,7 @@ class StickDetector(QThread):
         elif key == "s":
             if self.check_connection() is True:
                 self.spot_arm.close_gripper()
-                time.sleep(0.5)
                 self.spot_arm.arm_stow()
-                time.sleep(0.5)
                 self.spot_arm.sit()
                 print("Spot: Arm stowed and sitting.")
         elif key == "c":
@@ -303,42 +200,14 @@ class StickDetector(QThread):
             if self.holder and not self.stick_dropped:
                 self.stick_dropped = True
                 self.stick_drop_command_time = time.time()
-                self.holder.drop()
+                response = self.holder.drop()
                 print("Dropped stick.")
+                print(f"response elapsed time:{response.elapsed.seconds*1e3:.6f} ms")
         elif key == "2":
             if self.holder and self.stick_dropped:
                 self.stick_drop_command_time = None
-                self.stick_dropped = False
                 self.holder.pullup()
                 print("Initiated stick pull up.")
-                time.sleep(2)
-                if self.check_connection() is True:
-                    self.spot_arm.open_gripper()
-                    #self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
-                    print("Spot: Arm gripper opened.")
-        elif key == 'x':
-            self._save_aoi()
-            print("Saved current aoi.")
-        elif key == 'z':
-            self._reload_settings(self.reloadable_config)
-            print("Reloaded current config.")
-        elif key == ',':
-            print("Setting predictive scheduling.")
-            self.scheduling = 1
-            res = self.vsting.shape(4, 2)
-            print(f"Resp: {res}")
-        elif key == '.':
-            print("Setting reactive scheduling.")
-            self.scheduling = 2
-            res = self.vsting.shape(20, 10)
-            print(f"Resp: {res}")
-        elif key == 'f':
-            self.parent().showFullScreen()
-            print("Toggled fullscreen.")
-        
-        # after some input we update our labels
-        self._update_labels()
-
 
     def mouse_callback(self, event, x, y, flags, param):
         """Handle mouse events for AOI selection"""
@@ -375,8 +244,6 @@ class StickDetector(QThread):
                 self.detecting = True
                 self.prev_aoi = None  # Reset previous AOI for new selection
                 print("Starting Stick Detection...")
-        # after some input we update our labels
-        self._update_labels()
 
     def draw_status_tag(self, frame, x, y, status_tag="", bg_color=(0, 0, 0)):
         """Draw status tag above the AOI or at top-left corner"""
@@ -492,36 +359,25 @@ class StickDetector(QThread):
         magnitude, angle = cv2.cartToPolar(flow[..., 0], flow[..., 1], angleInDegrees=False)
 
         # Create a mask for angles close to downward direction (π/2)
-        down_mask = (angle > (np.pi/2 - self.angle_tol)) & (angle < (np.pi/2 + self.angle_tol))
-        down_angles = angle[down_mask]
+        angle_tol = 0.2 # tolerance in radians (~11.5 degrees)
+        down_mask = (angle > (np.pi/2 - angle_tol)) & (angle < (np.pi/2 + angle_tol))
+
         # Optionally, threshold by magnitude to avoid noise
-        #significant_motion = magnitude > self.magnitude_thresh
+        magnitude_thresh = 3.0
+        significant_motion = magnitude > magnitude_thresh
 
         # print(f"{magnitude=}")
 
         # Combine both masks
-        #falling_pixels = down_mask & significant_motion
+        falling_pixels = down_mask & significant_motion
 
-        filtered_mag = magnitude[down_mask]
-        w,h = self.aoi[2:4]
-        area = w*h
-        mag = filtered_mag.sum()/area
-        avrg_angle = down_angles.sum()/np.count_nonzero(down_angles)
 
         # print(f"{falling_pixels=}")
 
         # Count or visualize
-        if mag > self.magnitude_thresh and avrg_angle > 1.3 and avrg_angle < 1.9: 
-        #if np.any(falling_pixels):
-            print(f"average angle was: {avrg_angle}")
-            print(f"Magnitude was: {mag}")
+        if np.any(falling_pixels):
             print("Downward motion detected!")
             if self.check_connection() is True:
-                if self.stick_drop_command_time:
-                    self.to_early = 0.3 - (time.time() - self.stick_drop_command_time) #read from config
-                    print(f"{self.to_early=}")
-                    if self.to_early > 0: 
-                        time.sleep(self.to_early)
                 self.spot_arm.close_gripper()  # Close gripper
                 print("Spot: Arm gripper closed.")
             print(f"Found something! {self.total}x")
@@ -659,21 +515,20 @@ class StickDetector(QThread):
         if np.all(np.array(self.last_movement) > 0.1):
             self.total += 1
             print(f"Found something! {self.total}x")
-        self.frame_thresholds.append(changes)
-        if len([t for t in self.frame_thresholds if t > self.drop_threshold]) >= self.required_frames:
             print("Stick has dropped!")
-            self.frame_thresholds.clear()
             if self.check_connection() is True:
                 self.spot_arm.close_gripper()  # Close gripper
                 print("Spot: Arm gripper closed.")
                 print("Did Spot catch the stick?")
+            # self.send_ws_signal(0x2d) # Send signal
             self.detecting = False  # Stop detection after drop
-            
-            # update our labels
-            self._update_labels()
 
-        # Update previous AOI
-        # self.prev_aoi = current_aoi.copy()    
+        # filtered = cv2.addWeighted(
+        #     filtered, 0.1, frame.astype(np.float32) / 256.0, 0.9, 0
+        # )
+
+        self.last_frame = frame
+        self.prev_aoi_2 = grey_current_aoi
 
     def run(self):
         """Main thread: Perform pixel change detection and display"""
@@ -707,7 +562,7 @@ class StickDetector(QThread):
                 if self.aoi and self.prev_aoi is None:
                     x, y, w, h = self.aoi
                     self.prev_aoi = frame[y : y + h, x : x + w].copy()
-                    
+
                 # Perform detection
                 if self.detecting:
                     # Check for drop
@@ -720,6 +575,7 @@ class StickDetector(QThread):
                         if self.stick_drop_command_time:
                             print(f"Elapsed time since drop command: { ((end_time - self.stick_drop_command_time)*1e3):.3f} ms")
                         print(f"With AOI: {self.aoi}")
+                    
 
                 # Draw AOI rectangle if selecting or selected
                 if self.selecting_aoi and self.start_point and self.end_point:
@@ -734,7 +590,7 @@ class StickDetector(QThread):
                         status_tag = "Detecting"
                     else:
                         aoi_color = (0, 0, 255)  # Red for not detecting
-                        status_tag = "Detected"
+                        status_tag = "Suspend"
                     cv2.rectangle(frame, (x, y), (x + w, y + h), aoi_color, 2)
                     self.draw_status_tag(frame, x, y, status_tag, aoi_color)
 

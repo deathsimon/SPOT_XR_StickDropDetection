@@ -1,6 +1,6 @@
 [Settings]
 # Video source: 'ROS2' for ROS2 topic, 'RTSP' for RTSP stream, or 'Camera' for local camera
-video_source = Camera
+video_source = ROS2
 #video_source = RTSP
 # RTSP server address
 rtsp_url = rtsp://10.42.1.61:8554/cam_360?tcp

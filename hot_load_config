@@ -1,10 +1,10 @@
 [RuntimeSettings]
-aoi = (438, 187, 28, 50)
+aoi = (669, 103, 21, 70)
 fall_detection_method = 2
 mse_threshold = 100
 ssim_change_threshold = 0.2
 stored_frames = 1
 required_frames = 1
-of_angle_tolerance = 0.2
-of_magnitude_thres = 2.5
+of_angle_tolerance = 0.3
+of_magnitude_thres = 0.25
 

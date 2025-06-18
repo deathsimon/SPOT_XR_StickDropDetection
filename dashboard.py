@@ -5,6 +5,9 @@ from PySide6.QtCore import QThread, Slot, Qt
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtWidgets import QWidget, QApplication, QMainWindow, QStyle, QPushButton
 from PySide6.QtUiTools import QUiLoader
+import PySide6
+from PySide6.QtWebEngineWidgets import QWebEngineView
+
 
 from stick_detection import StickDetector
 
@@ -17,7 +20,7 @@ class GuiContainer(QMainWindow):
         
         # load from file
         loader = QUiLoader()
-        self.window : QWidget = loader.load("dashboard_v2.ui", None)
+        self.window : QMainWindow = loader.load("dashboard_v2.ui", None)
         
         # create the detection thread
         self.runner_thread = StickDetector(self, config_file="config")
@@ -31,17 +34,21 @@ class GuiContainer(QMainWindow):
         
         # create the layouts
         self.setCentralWidget(self.window)
-        
-        # handle all the buttons
-        self.window.detectionStart_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
-        self.window.detectionstop_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
-        self.window.spotReady_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('r'))
+        self.window.ministryLogo = QWebEngineView()
+        self.window.ministryLogo.load("https://www.bmbf.de/SiteGlobals/Frontend/Images/images/logo-en.svg?__blob=normal&v=4")
+        self.window.ministryLogo.page().settings().setAttribute(PySide6.QtWebEngineCore.QWebEngineSettings.WebAttribute.ShowScrollBars,False)        
+        # handle all the buttons predictiveSched_btn
+        self.window.predictiveSched_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback(','))
+        self.window.reactiveSched_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('.'))
+        # self.window.detectionStart_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
+        # self.window.detectionstop_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
+        # self.window.spotReady_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('r'))
         # self.window.reset_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
-        self.window.gripperOpen_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('o'))
-        self.window.gripperClose_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('c'))
-        self.window.sitStand_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('s'))
-        self.window.dropStick_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('1'))
-        self.window.raiseStick_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('2'))
+        # self.window.gripperOpen_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('o'))
+        # self.window.gripperClose_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('c'))
+        # self.window.sitStand_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('s'))
+        # self.window.dropStick_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('1'))
+        # self.window.raiseStick_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('2'))
         
         # self.window.save_aoi_btn.clicked.connect(lambda: self.runner_thread._save_aoi())
         # self.window.reload_cfg_btn.clicked.connect(lambda: self.runner_thread._reload_settings(self.runner_thread.reloadable_config))
