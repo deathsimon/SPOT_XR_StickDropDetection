@@ -11,7 +11,7 @@ from radiodegradation import VStingClient
 from collections import deque
 from skimage.metrics import structural_similarity as ssim
 from PySide6.QtGui import QImage, QMouseEvent, QKeyEvent
-from PySide6.QtCore import QThread, Signal, QEvent, QObject, Qt
+from PySide6.QtCore import QThread, Signal, QEvent, QObject, Qt, QtTimer
 from PySide6.QtWidgets import QLabel, QStyle, QWidget
 
 class StickDetector(QThread):
@@ -279,9 +279,7 @@ class StickDetector(QThread):
             if self.check_connection() is True:
                 self.spot_arm.stand()
                 self.spot_arm.open_gripper_at_angle(35)
-                self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
-                # self.spot_arm.set_arm_velocity(0.0, 0.2, 0.0) # nudge left
-                # self.spot_arm.set_arm_velocity(0.0, -0.2, 0.0) # nudge right
+                self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)                
                 print("Spot: Arm to default position.")
         elif key == "o":
             if self.check_connection() is True:
@@ -290,10 +288,12 @@ class StickDetector(QThread):
         elif key == "s":
             if self.check_connection() is True:
                 self.spot_arm.close_gripper()
-                time.sleep(0.5)
-                self.spot_arm.arm_stow()
-                time.sleep(0.5)
-                self.spot_arm.sit()
+                # time.sleep(0.5)
+                # self.spot_arm.arm_stow()
+                QtTimer.singleShot(500, self.spot_arm.arm_stow)  # Stow arm after closing gripper                
+                # time.sleep(0.5)
+                # self.spot_arm.sit()
+                QtTimer.singleShot(500, self.spot_arm.sit)  # Sit after stowing arm
                 print("Spot: Arm stowed and sitting.")
         elif key == "c":
             if self.check_connection() is True:
@@ -311,11 +311,14 @@ class StickDetector(QThread):
                 self.stick_dropped = False
                 self.holder.pullup()
                 print("Initiated stick pull up.")
-                time.sleep(2)
                 if self.check_connection() is True:
-                    self.spot_arm.open_gripper()
-                    #self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
+                    QtTimer.singleShot(2000, self.spot_arm.open_gripper)
                     print("Spot: Arm gripper opened.")
+                # wait for 2 seconds to ensure the arm is ready
+                # time.sleep(2)
+                # if self.check_connection() is True:
+                    # self.spot_arm.open_gripper()
+                    # self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)                    
         elif key == 'x':
             self._save_aoi()
             print("Saved current aoi.")
@@ -581,100 +584,6 @@ class StickDetector(QThread):
         else :
             return changes
 
-
-
-    def check_drop_cni(self, frame):
-        """Check for drastic pixel changes in AOI"""
-        if self.aoi is None and self.prev_aoi_2 is None:
-            return
-        
-        current_aoi = None
-
-        x, y, w, h = self.aoi
-        # print("Actually comparing 1")
-        if self.prev_aoi_2 is None:
-            # x, y, w, h = self.aoi
-            current_aoi = frame[y : y + h, x : x + w]
-            self.prev_aoi_2 = cv2.cvtColor(current_aoi, cv2.COLOR_BGR2GRAY)
-            return
-
-        # print("Actually comparing 2")
-
-        if current_aoi == None:
-            # if x == None:
-            #     x, y, w, h = self.aoi
-            current_aoi = frame[y : y + h, x : x + w]
-        grey_current_aoi = cv2.cvtColor(current_aoi, cv2.COLOR_BGR2GRAY)
-
-
-        # print("Actually comparing 3")
-
-        if current_aoi.size == 0:
-            return
-
-
-        # print("Actually comparing 4")
-
-        # print(f"{grey_current_aoi.shape=}, {self.prev_aoi_2.shape=}")
-        
-        if grey_current_aoi.shape != self.prev_aoi_2.shape:
-            self.last_frame = frame
-            self.prev_aoi_2 = grey_current_aoi
-            return
-
-
-        # print("Actually comparing 5")
-
-        # calculate flow
-        flow = cv2.calcOpticalFlowFarneback(
-            self.prev_aoi_2,
-            grey_current_aoi,
-            None,
-            pyr_scale=0.5,
-            levels=1,
-            winsize=3,
-            iterations=1,
-            poly_n=2,
-            poly_sigma=1.2,
-            flags=0,
-        )
-
-        mag_img, pha_img = cv2.cartToPolar(
-            flow[..., 0], flow[..., 1], angleInDegrees=True
-        )
-
-        filtered = np.where(
-            ((pha_img < 110) & (pha_img > 60)) & (mag_img > 6.0), mag_img, 0
-        )
-
-        area = w*h
-        normed_change = filtered.sum()/area
-        if normed_change > 0.1:
-            print(f"{normed_change=}")
-        self.last_movement.append(normed_change)
-
-
-
-        # if np.all(np.array(self.last_movement) > 10000):
-        if np.all(np.array(self.last_movement) > 0.1):
-            self.total += 1
-            print(f"Found something! {self.total}x")
-        self.frame_thresholds.append(changes)
-        if len([t for t in self.frame_thresholds if t > self.drop_threshold]) >= self.required_frames:
-            print("Stick has dropped!")
-            self.frame_thresholds.clear()
-            if self.check_connection() is True:
-                self.spot_arm.close_gripper()  # Close gripper
-                print("Spot: Arm gripper closed.")
-                print("Did Spot catch the stick?")
-            self.detecting = False  # Stop detection after drop
-            
-            # update our labels
-            self._update_labels()
-
-        # Update previous AOI
-        # self.prev_aoi = current_aoi.copy()    
-
     def run(self):
         """Main thread: Perform pixel change detection and display"""
         self.running = True
@@ -712,8 +621,7 @@ class StickDetector(QThread):
                 if self.detecting:
                     # Check for drop
                     start_time = time.time()
-                    changes = self.check_drop(frame)
-                    # self.check_drop_cni(frame)
+                    changes = self.check_drop(frame)                    
                     end_time = time.time()
                     if self.verbose and changes == True:
                         print(f"Drop Check Time: {((end_time - start_time)*1e3):.3f} ms")
