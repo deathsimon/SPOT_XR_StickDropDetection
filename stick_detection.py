@@ -1,6 +1,7 @@
 import cv2
 import configparser
 import time
+import random
 
 # import threading
 import numpy as np
@@ -11,7 +12,7 @@ from radiodegradation import VStingClient
 from collections import deque
 from skimage.metrics import structural_similarity as ssim
 from PySide6.QtGui import QImage, QMouseEvent, QKeyEvent
-from PySide6.QtCore import QThread, Signal, QEvent, QObject, Qt, QtTimer
+from PySide6.QtCore import QThread, Signal, QEvent, QObject, Qt, QTimer
 from PySide6.QtWidgets import QLabel, QStyle, QWidget
 
 class StickDetector(QThread):
@@ -166,6 +167,7 @@ class StickDetector(QThread):
         self.stick_dropped = False
         self.stick_drop_command_time = None
         self.scheduling = 0
+        self.autoDropCatch = False
 
         if config["Settings"].get("aoi", None):
             aoi_parts = config["Settings"].get("aoi").split(",")
@@ -213,6 +215,10 @@ class StickDetector(QThread):
         except ConnectionError as e:
             print(f"Warning: {e}")
             self.spot_arm = None
+
+        # Set up automatic drop catch
+        self.automation_timer = QTimer(self)
+        self.automation_timer.timeout.connect(self.run_automation_sequence)
         
         # update labels of the dashboards
         self._update_labels()
@@ -290,10 +296,10 @@ class StickDetector(QThread):
                 self.spot_arm.close_gripper()
                 # time.sleep(0.5)
                 # self.spot_arm.arm_stow()
-                QtTimer.singleShot(500, self.spot_arm.arm_stow)  # Stow arm after closing gripper                
+                QTimer.singleShot(500, self.spot_arm.arm_stow)  # Stow arm after closing gripper                
                 # time.sleep(0.5)
                 # self.spot_arm.sit()
-                QtTimer.singleShot(500, self.spot_arm.sit)  # Sit after stowing arm
+                QTimer.singleShot(500, self.spot_arm.sit)  # Sit after stowing arm
                 print("Spot: Arm stowed and sitting.")
         elif key == "c":
             if self.check_connection() is True:
@@ -312,7 +318,7 @@ class StickDetector(QThread):
                 self.holder.pullup()
                 print("Initiated stick pull up.")
                 if self.check_connection() is True:
-                    QtTimer.singleShot(2000, self.spot_arm.open_gripper)
+                    QTimer.singleShot(2000, self.spot_arm.open_gripper)
                     print("Spot: Arm gripper opened.")
                 # wait for 2 seconds to ensure the arm is ready
                 # time.sleep(2)
@@ -338,6 +344,22 @@ class StickDetector(QThread):
         elif key == 'f':
             self.parent().showFullScreen()
             print("Toggled fullscreen.")
+        elif key == 'a':
+            self.autoDropCatch = not self.autoDropCatch
+            if self.autoDropCatch:
+                # ensure Spot Arm and Rod Holder are connected
+                if self.check_connection() is False:
+                    print("Warning: Auto Drop Catch requires Spot Arm connection.")
+                    self.autoDropCatch = False
+                if self.holder is None:
+                    print("Warning: Auto Drop Catch requires Rod Holder connection.")
+                    self.autoDropCatch = False
+                print("Auto Drop Catch enabled.")
+                self.automation_timer.start(120000)  # Run sequence every 120 seconds
+                self.run_automation_sequence()
+            else:
+                self.automation_timer.stop()
+                print("Auto Drop Catch disabled.")
         
         # after some input we update our labels
         self._update_labels()
@@ -583,6 +605,17 @@ class StickDetector(QThread):
                 self.detecting = False  # Stop detection after drop
         else :
             return changes
+
+    def run_automation_sequence(self):
+        """Run the automation sequence for stick drop and catch"""
+        # [TODO] might need to update prev_aoi before every drop?
+        # Randomly drop stick
+        rand_drop = random.randint(0, 30000)    # 0~30 seconds
+        QTimer.singleShot(rand_drop, self.holder.drop)
+        # Wait for 20 seconds (after the drop) before pulling up
+        QTimer.singleShot(rand_drop+20000, self.holder.pullup)
+        # Wait for another 2 seconds before opening the gripper
+        QTimer.singleShot(rand_drop+22000, self.spot_arm.open_gripper)
 
     def run(self):
         """Main thread: Perform pixel change detection and display"""
