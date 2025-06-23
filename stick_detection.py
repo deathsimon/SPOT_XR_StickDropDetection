@@ -49,7 +49,6 @@ class StickDetector(QThread):
         # else:
         #     window.spotStatus.setText("DISCONNECTED")
         #     window.spotStatus.setStyleSheet("background-color: #ff0000;")
-
     
     def _reload_settings(self, path: str):
         self.reloadable_config = path
@@ -167,7 +166,7 @@ class StickDetector(QThread):
         self.stick_dropped = False
         self.stick_drop_command_time = None
         self.scheduling = 0
-        self.autoDropCatch = False
+        self.autoDropCatch = False # Flag for automatic drop catch
 
         if config["Settings"].get("aoi", None):
             aoi_parts = config["Settings"].get("aoi").split(",")
@@ -282,17 +281,15 @@ class StickDetector(QThread):
             print("Detection toggled.")
         elif key == 'r':
             # Reset Spot Arm                    
-            if self.check_connection() is True:
-                self.spot_arm.stand()
-                self.spot_arm.open_gripper_at_angle(35)
-                self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)                
+            if self.SpotIsConnected() is True:
+                self.spot_arm.ready_position()                
                 print("Spot: Arm to default position.")
         elif key == "o":
-            if self.check_connection() is True:
+            if self.SpotIsConnected() is True:
                 self.spot_arm.open_gripper()
                 print("Spot: Arm gripper opened.")
         elif key == "s":
-            if self.check_connection() is True:
+            if self.SpotIsConnected() is True:
                 self.spot_arm.close_gripper()
                 # time.sleep(0.5)
                 # self.spot_arm.arm_stow()
@@ -302,7 +299,7 @@ class StickDetector(QThread):
                 QTimer.singleShot(500, self.spot_arm.sit)  # Sit after stowing arm
                 print("Spot: Arm stowed and sitting.")
         elif key == "c":
-            if self.check_connection() is True:
+            if self.SpotIsConnected() is True:
                 self.spot_arm.close_gripper()
                 print("Spot: Arm gripper closed.")
         elif key == "1":
@@ -317,12 +314,12 @@ class StickDetector(QThread):
                 self.stick_dropped = False
                 self.holder.pullup()
                 print("Initiated stick pull up.")
-                if self.check_connection() is True:
+                if self.SpotIsConnected() is True:
                     QTimer.singleShot(2000, self.spot_arm.open_gripper)
                     print("Spot: Arm gripper opened.")
                 # wait for 2 seconds to ensure the arm is ready
                 # time.sleep(2)
-                # if self.check_connection() is True:
+                # if self.SpotIsConnected() is True:
                     # self.spot_arm.open_gripper()
                     # self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)                    
         elif key == 'x':
@@ -348,7 +345,7 @@ class StickDetector(QThread):
             self.autoDropCatch = not self.autoDropCatch
             if self.autoDropCatch:
                 # ensure Spot Arm and Rod Holder are connected
-                if self.check_connection() is False:
+                if self.SpotIsConnected() is False:
                     print("Warning: Auto Drop Catch requires Spot Arm connection.")
                     self.autoDropCatch = False
                 if self.holder is None:
@@ -439,7 +436,7 @@ class StickDetector(QThread):
             cv2.LINE_AA,
         )
 
-    def check_connection(self):
+    def SpotIsConnected(self):
         if self.spot_arm is None:
             print("Warning: Action not performed. Spot Arm not initialized.")
             return False
@@ -504,7 +501,7 @@ class StickDetector(QThread):
         # if np.all(np.array(self.last_movement) > 10000):
         # if np.all(np.array(self.last_movement) > 0.1):
         #     self.total += 1
-        #     if self.check_connection() is True:
+        #     if self.SpotIsConnected() is True:
         #         self.spot_arm.close_gripper()  # Close gripper
         #         print("Spot: Arm gripper closed.")
         #     print(f"Found something! {self.total}x")
@@ -541,7 +538,7 @@ class StickDetector(QThread):
             print(f"average angle was: {avrg_angle}")
             print(f"Magnitude was: {mag}")
             print("Downward motion detected!")
-            if self.check_connection() is True:
+            if self.SpotIsConnected() is True:
                 if self.stick_drop_command_time:
                     self.to_early = 0.3 - (time.time() - self.stick_drop_command_time) #read from config
                     print(f"{self.to_early=}")
@@ -597,7 +594,7 @@ class StickDetector(QThread):
             if len([t for t in self.frame_thresholds if t > self.drop_threshold]) >= self.required_frames:
                 print("Stick has dropped!")
                 self.frame_thresholds.clear()
-                if self.check_connection() is True:
+                if self.SpotIsConnected() is True:
                     self.spot_arm.close_gripper()  # Close gripper
                     print("Spot: Arm gripper closed.")
                     print("Did Spot catch the stick?")
@@ -609,6 +606,8 @@ class StickDetector(QThread):
     def run_automation_sequence(self):
         """Run the automation sequence for stick drop and catch"""
         # [TODO] might need to update prev_aoi before every drop?
+        # set Spot arm to ready position
+        self.spot_arm.ready_position()
         # Randomly drop stick
         rand_drop = random.randint(0, 30000)    # 0~30 seconds
         QTimer.singleShot(rand_drop, self.holder.drop)

@@ -65,6 +65,11 @@ class SpotArm:
             ApiRequests("ARM_VEL").id.to_bytes(1, "big")
             + struct.pack(">3f", x, y, z)
             )
+    def ready_position(self):
+        """Set the arm to a ready position"""
+        self.stand()
+        self.open_gripper_at_angle(35)
+        self.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
 
 
 # Spot_arm = SpotArm()
