@@ -11,8 +11,8 @@ from radiodegradation import VStingClient
 
 from collections import deque
 from skimage.metrics import structural_similarity as ssim
-from PySide6.QtGui import QImage, QMouseEvent, QKeyEvent
-from PySide6.QtCore import QThread, Signal, QEvent, QObject, Qt, QTimer
+from PySide6.QtGui import QImage, QMouseEvent, QKeyEvent, QPainter, QFont
+from PySide6.QtCore import QThread, Signal, QEvent, QObject, Qt, QTimer, QRect
 from PySide6.QtWidgets import QLabel, QStyle, QWidget
 
 class StickDetector(QThread):
@@ -167,6 +167,7 @@ class StickDetector(QThread):
         self.stick_drop_command_time = None
         self.scheduling = 0
         self.autoDropCatch = False # Flag for automatic drop catch
+        self.qt_drawing = True
 
         if config["Settings"].get("aoi", None):
             aoi_parts = config["Settings"].get("aoi").split(",")
@@ -345,8 +346,14 @@ class StickDetector(QThread):
             res = self.vsting.shape(20, 10)
             print(f"Resp: {res}")
         elif key == 'f':
-            self.parent().showFullScreen()
+            if self.parent().isFullScreen():
+                self.parent().showNormal()
+            else:
+                self.parent().showFullScreen()
             print("Toggled fullscreen.")
+        elif key == 'y':
+            self.qt_drawing = not self.qt_drawing
+            print("Toggled qt drawing.")
         elif key == 'a':
             self.autoDropCatch = not self.autoDropCatch
             if self.autoDropCatch:
@@ -670,39 +677,39 @@ class StickDetector(QThread):
                             print(f"Elapsed time since drop command: { ((end_time - self.stick_drop_command_time)*1e3):.3f} ms")
                         print(f"With AOI: {self.aoi}")
 
-                # Draw AOI rectangle if selecting or selected
-                if self.selecting_aoi and self.start_point and self.end_point:
-                    x1, y1 = self.start_point
-                    x2, y2 = self.end_point
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
-                    self.draw_status_tag(frame, x1, y1, "Selecting", (255, 0, 0))
-                elif self.aoi:
-                    x, y, w, h = self.aoi
-                    if self.detecting:
-                        aoi_color = (0, 255, 0)  # Green for detecting
-                        status_tag = "Detecting"
-                    else:
-                        aoi_color = (0, 0, 255)  # Red for not detecting
-                        status_tag = "Detected"
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), aoi_color, 2)
-                    self.draw_status_tag(frame, x, y, status_tag, aoi_color)
+                if self.qt_drawing == False:
+                    # Draw AOI rectangle if selecting or selected
+                    if self.selecting_aoi and self.start_point and self.end_point:
+                        x1, y1 = self.start_point
+                        x2, y2 = self.end_point
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                        self.draw_status_tag(frame, x1, y1, "Selecting", (255, 0, 0))
+                    elif self.aoi:
+                        x, y, w, h = self.aoi
+                        if self.detecting:
+                            aoi_color = (0, 255, 0)  # Green for detecting
+                            status_tag = "Detecting"
+                        else:
+                            aoi_color = (0, 0, 255)  # Red for not detecting
+                            status_tag = "Detected"
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), aoi_color, 2)
+                        self.draw_status_tag(frame, x, y, status_tag, aoi_color)
 
-                # Display the frame
-                # cv2.imshow("Stick Detection", frame)
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                font_scale = 0.6
-                font_color = (255, 255, 255)  # White text
-                thickness = 1
-                cv2.putText(
-                    frame,
-                    f"{self.fps:03.1f}",
-                    (20, 20),
-                    font,
-                    font_scale,
-                    font_color,
-                    thickness,
-                    cv2.LINE_AA,
-                )
+                    # Display the frame
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    font_scale = 0.6
+                    font_color = (255, 255, 255)  # White text
+                    thickness = 1
+                    cv2.putText(
+                        frame,
+                        f"{self.fps:03.1f}",
+                        (20, 20),
+                        font,
+                        font_scale,
+                        font_color,
+                        thickness,
+                        cv2.LINE_AA,
+                    )
 
                 # # create QImage and send to widget
                 h, w, ch = frame.shape

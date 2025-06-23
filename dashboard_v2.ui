@@ -42,10 +42,6 @@
           border-width: 1px;
           border-style: solid;
         }
-		QWebEngineView {
-			overscroll-behaviour: none;
-}
-      
       </string>
   </property>
   <widget class="QWidget" name="centralwidget">
