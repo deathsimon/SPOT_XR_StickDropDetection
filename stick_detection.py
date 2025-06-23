@@ -273,12 +273,18 @@ class StickDetector(QThread):
         if key == 'q':
             print("WARN: Close via window!")
         elif key == 'd':
-            # Restart detection after pressing 'd'
+            # Toggle detection on 'd' key press
             if self.aoi is None:
                 print("Error: No AOI selected. Please select an AOI first.")
-            self.prev_aoi = None # Reset previous AOI
+                return
+            else:
+                self.prev_aoi = None # Reset previous AOI    
             self.detecting = not self.detecting
             print("Detection toggled.")
+                        
+            # self.prev_aoi = None # Reset previous AOI
+            # self.detecting = not self.detecting
+            # print("Detection toggled.")
         elif key == 'r':
             # Reset Spot Arm                    
             if self.SpotIsConnected() is True:
@@ -641,6 +647,9 @@ class StickDetector(QThread):
                     self.fps_dq.append(1.0 / (now - self.last_time))
                     self.fps = sum(self.fps_dq) / len(self.fps_dq)
                     self.last_time = now
+
+                    if len(self.fps_dq) >= 1000:    # Reset FPS deque after 1000 frames (~30 seconds)
+                        self.fps_dq.clear()
                 else:
                     continue  # Skip if no frame yet
 
