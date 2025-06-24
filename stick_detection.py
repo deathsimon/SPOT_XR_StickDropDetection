@@ -22,11 +22,11 @@ class StickDetector(QThread):
         # handle labels to display status
         window: QWidget = self.parent().window
         if self.scheduling == 1:
-            window.schedulingLabel.setText("O-RACES")
-            window.schedulingLabel.setStyleSheet("background-color: #90BE6D;")
+            window.schedulingDynamicBtn.setText("O-RACES")
+            window.schedulingDynamicBtn.setStyleSheet("background-color: #90BE6D;")
         elif self.scheduling == 2:
-            window.schedulingLabel.setText("REACTIVE")
-            window.schedulingLabel.setStyleSheet("background-color: #ff0000;")
+            window.schedulingDynamicBtn.setText("REACTIVE")
+            window.schedulingDynamicBtn.setStyleSheet("background-color: #ff0000;")
         # if self.detecting:
         #     window.fallDetectionStatus.setText("ACTIVE")
         #     window.fallDetectionStatus.setStyleSheet("background-color: #90BE6D;")
@@ -165,7 +165,7 @@ class StickDetector(QThread):
         self.total = 0
         self.stick_dropped = False
         self.stick_drop_command_time = None
-        self.scheduling = 0
+        self.scheduling = 1
         self.autoDropCatch = False # Flag for automatic drop catch
         self.qt_drawing = True
 
@@ -263,6 +263,7 @@ class StickDetector(QThread):
             kv = QKeyEvent(event)
             try:
                 self.keyboard_callback(chr(kv.key()))
+                self._update_labels()
             except:
                 pass
             return True
@@ -336,15 +337,14 @@ class StickDetector(QThread):
             self._reload_settings(self.reloadable_config)
             print("Reloaded current config.")
         elif key == ',':
-            print("Setting predictive scheduling.")
-            self.scheduling = 1
-            res = self.vsting.shape(4, 2)
-            print(f"Resp: {res}")
-        elif key == '.':
-            print("Setting reactive scheduling.")
-            self.scheduling = 2
-            res = self.vsting.shape(20, 10)
-            print(f"Resp: {res}")
+            if self.scheduling == 1:
+                self.scheduling = 2
+                res = self.vsting.shape(4, 2)
+                print("Set predictive scheduling.")
+            elif self.scheduling == 2:
+                self.scheduling = 1
+                res = self.vsting.shape(20, 10)
+                print("Set reactive scheduling.")
         elif key == 'f':
             if self.parent().isFullScreen():
                 self.parent().showNormal()

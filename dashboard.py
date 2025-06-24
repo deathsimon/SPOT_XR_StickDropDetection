@@ -47,11 +47,8 @@ class GuiContainer(QMainWindow):
             False,
         )
         # handle all the buttons predictiveSched_btn
-        self.window.predictiveSched_btn.clicked.connect(
+        self.window.schedulingDynamicBtn.clicked.connect(
             lambda: self.runner_thread.keyboard_callback(",")
-        )
-        self.window.reactiveSched_btn.clicked.connect(
-            lambda: self.runner_thread.keyboard_callback(".")
         )
         # self.window.detectionStart_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
         # self.window.detectionstop_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
