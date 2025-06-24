@@ -340,11 +340,11 @@ class StickDetector(QThread):
             if self.scheduling == 1:
                 self.scheduling = 2
                 res = self.vsting.shape(4, 2)
-                print("Set predictive scheduling.")
+                print("Set reactive scheduling.")
             elif self.scheduling == 2:
                 self.scheduling = 1
                 res = self.vsting.shape(20, 10)
-                print("Set reactive scheduling.")
+                print("Set predictive scheduling.")
         elif key == 'f':
             if self.parent().isFullScreen():
                 self.parent().showNormal()
