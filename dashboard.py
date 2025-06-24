@@ -65,6 +65,7 @@ s : Sit down Spot
 f : Toggle fullscreen
 y : Toggle Qt-enhanced drawing
 a : Toggle automatic testing
+Arrow Keys : Move the arm
 x / Ctrl+S : Save current state
 z / Ctrl+R : Reload state
 """)
