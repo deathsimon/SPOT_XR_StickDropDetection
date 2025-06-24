@@ -7,4 +7,5 @@ stored_frames = 1
 required_frames = 1
 of_angle_tolerance = 0.3
 of_magnitude_thres = 0.25
+reset_pose = (0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
 

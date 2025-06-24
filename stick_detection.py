@@ -80,16 +80,20 @@ class StickDetector(QThread):
         
         self.frame_thresholds = deque([], maxlen=self.stored_frames)
         
+        reset_str = parser['RuntimeSettings'].get("reset_pose", "(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)")
+        self.reset_pose = list(float(x) for x in reset_str.removeprefix('(').removesuffix(')').split(','))
+        
         # we need to update the labels (if we can)
         try:
             self._update_labels()
         except:
             pass
 
-    def _save_aoi(self):
+    def _save_state(self):
         parser = configparser.ConfigParser()
         parser.read(self.reloadable_config)
         parser.set("RuntimeSettings", "aoi", str(self.aoi))
+        parser.set("RuntimeSettings", "reset_pose", str(tuple(self.reset_pose)))
         parser.write(open(self.reloadable_config, "w"))
     
     def __init__(self, parent, config_file="config", reloadable_config="hot_load_config"):
@@ -261,6 +265,34 @@ class StickDetector(QThread):
             return True
         elif event.type() == QEvent.Type.KeyPress:
             kv = QKeyEvent(event)
+            
+            # we do not want repeated keypresses
+            if kv.isAutoRepeat():
+                return False
+            
+            if self.SpotIsConnected() is True:
+                # nude shoulder joint left/right
+                if kv.key() == Qt.Key.Key_Left:
+                    self.reset_pose[0] += 0.05
+                    self.spot_arm.ready_position_at(self.reset_pose)
+                    print(f"Spot: Changed Arm's default position to {self.reset_pose}.")
+                if kv.key() == Qt.Key.Key_Right:
+                    self.reset_pose[0] -= 0.05
+                    self.spot_arm.ready_position_at(self.reset_pose)
+                    print(f"Spot: Changed Arm's default position to {self.reset_pose}.")
+                
+                # strech arm or retract
+                if kv.key() == Qt.Key.Key_Up:
+                    self.reset_pose[1] += 0.05
+                    self.reset_pose[2] -= 0.05
+                    self.spot_arm.ready_position_at(self.reset_pose)
+                    print(f"Spot: Changed Arm's default position to {self.reset_pose}.")
+                if kv.key() == Qt.Key.Key_Down:
+                    self.reset_pose[1] -= 0.05
+                    self.reset_pose[2] += 0.05
+                    self.spot_arm.ready_position_at(self.reset_pose)
+                    print(f"Spot: Changed Arm's default position to {self.reset_pose}.")
+            
             try:
                 self.keyboard_callback(chr(kv.key()))
                 self._update_labels()
@@ -290,8 +322,8 @@ class StickDetector(QThread):
         elif key == 'r':
             # Reset Spot Arm                    
             if self.SpotIsConnected() is True:
-                self.spot_arm.ready_position()                
-                print("Spot: Arm to default position.")
+                self.spot_arm.ready_position_at(self.reset_pose)                
+                print(f"Spot: Arm to default position {self.reset_pose}.")
         elif key == "o":
             if self.SpotIsConnected() is True:
                 self.spot_arm.open_gripper()
@@ -331,7 +363,7 @@ class StickDetector(QThread):
                     # self.spot_arm.open_gripper()
                     # self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)                    
         elif key == 'x':
-            self._save_aoi()
+            self._save_state()
             print("Saved current aoi.")
         elif key == 'z':
             self._reload_settings(self.reloadable_config)

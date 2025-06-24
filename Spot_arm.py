@@ -71,6 +71,12 @@ class SpotArm:
         self.open_gripper_at_angle(35)
         self.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)
 
+    def ready_position_at(self, joints):
+        """Set the arm to a ready position"""
+        self.stand()
+        self.open_gripper_at_angle(35)
+        self.set_arm_joints(*joints)
+
 
 # Spot_arm = SpotArm()
 

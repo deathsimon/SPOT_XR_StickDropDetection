@@ -75,9 +75,9 @@ class GuiContainer(QMainWindow):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        for btn in dir(self.window):
-            if isinstance(getattr(self.window, btn), QPushButton):
-                self._dynamic_btn_sizer(getattr(self.window, btn))
+        # for btn in dir(self.window):
+        #     if isinstance(getattr(self.window, btn), QPushButton):
+        #         self._dynamic_btn_sizer(getattr(self.window, btn))
 
     def draw_status_tag(self, painter, x, y, w, h, text, color):
         # set fontsize
