@@ -270,6 +270,15 @@ class StickDetector(QThread):
             if kv.isAutoRepeat():
                 return False
             
+            if kv.modifiers() == Qt.KeyboardModifier.ControlModifier and kv.key() == Qt.Key.Key_S:
+                self._save_state()
+                print("Saved current aoi.")
+                return True
+            if kv.modifiers() == Qt.KeyboardModifier.ControlModifier and kv.key() == Qt.Key.Key_R:
+                self._reload_settings(self.reloadable_config)
+                print("Reloaded current config.")
+                return True
+            
             if self.SpotIsConnected() is True:
                 # nude shoulder joint left/right
                 if kv.key() == Qt.Key.Key_Left:
@@ -364,7 +373,7 @@ class StickDetector(QThread):
                     # self.spot_arm.set_arm_joints(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)                    
         elif key == 'x':
             self._save_state()
-            print("Saved current aoi.")
+            print("Saved current State.")
         elif key == 'z':
             self._reload_settings(self.reloadable_config)
             print("Reloaded current config.")

@@ -4,7 +4,7 @@ import sys
 from PySide6.QtGui import QPixmap, QImage, QPainter, QFont, QBrush, QPen
 from PySide6.QtCore import QThread, Slot, Qt, QRect, QMargins
 from PySide6.QtQuickControls2 import QQuickStyle
-from PySide6.QtWidgets import QWidget, QApplication, QMainWindow, QStyle, QPushButton
+from PySide6.QtWidgets import QWidget, QApplication, QMainWindow, QStyle, QPushButton, QLabel
 from PySide6.QtUiTools import QUiLoader
 import PySide6
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -50,18 +50,25 @@ class GuiContainer(QMainWindow):
         self.window.schedulingDynamicBtn.clicked.connect(
             lambda: self.runner_thread.keyboard_callback(",")
         )
-        # self.window.detectionStart_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
-        # self.window.detectionstop_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('d'))
-        # self.window.spotReady_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('r'))
-        # self.window.reset_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
-        # self.window.gripperOpen_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('o'))
-        # self.window.gripperClose_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('c'))
-        # self.window.sitStand_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('s'))
-        # self.window.dropStick_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('1'))
-        # self.window.raiseStick_btn.clicked.connect(lambda: self.runner_thread.keyboard_callback('2'))
-
-        # self.window.save_aoi_btn.clicked.connect(lambda: self.runner_thread._save_aoi())
-        # self.window.reload_cfg_btn.clicked.connect(lambda: self.runner_thread._reload_settings(self.runner_thread.reloadable_config))
+        
+        # add a tooltip for help
+        self.window.schedulingDynamicBtn.setToolTip("""
+Controls:
+d : Toggle Detection
+r : Reset Spot to default position
+o : Open gripper
+c : Close gripper
+s : Sit down Spot
+1 : Drop Stick
+2 : Pull up Stick
+, : Toggle reactive/predictive scheduling
+f : Toggle fullscreen
+y : Toggle Qt-enhanced drawing
+a : Toggle automatic testing
+x / Ctrl+S : Save current state
+z / Ctrl+R : Reload state
+""")
+        self.window.schedulingDynamicBtn.setToolTipDuration(3000) # 3 seconds
 
     def _dynamic_btn_sizer(self, btn: QPushButton):
         font = btn.font()
