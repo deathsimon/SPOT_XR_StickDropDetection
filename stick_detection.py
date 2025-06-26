@@ -109,7 +109,7 @@ class StickDetector(QThread):
         reset_str = parser['RuntimeSettings'].get("reset_pose", "(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)")
         self.reset_pose = list(float(x) for x in reset_str.removeprefix('(').removesuffix(')').split(','))
         
-        self.too_early_time = config["RuntimeSettings"].getint("too_early_time", 0.33)
+        self.too_early_time = parser["RuntimeSettings"].getfloat("too_early_time", 0.33)
 
         
         # we need to update the labels (if we can)
