@@ -17,3 +17,4 @@ port = 8888
 aoi = 663, 129, 24, 39
 use_stick_ws = True
 vsting_ip = 10.42.1.233
+history_length = 2

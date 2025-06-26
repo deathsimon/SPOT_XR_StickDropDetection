@@ -31,11 +31,27 @@ class StickDetector(QThread):
             window.reactive_btn.setStyleSheet("background-color: #ff0000;")
             window.oraces_btn.setStyleSheet("background-color: #666666;")
         
+        # parse to int
+        txts = []
+        for dt in self.detection_history:
+            if dt is not None:
+                drop_time = f"{int(dt):4d}"
+                txts.append(drop_time)
+            else:
+                txts.append("---")
+                
+
+        # style history
+        normal_style = f"color:#FFFFFF;"
+        for i in range(len(txts)-1):
+            txts[i] = f'<span style="{normal_style}">{txts[i]} ms</span><br>'
+        
+        # style latest
+        last_style = f"color:#90BE6D;"
+        txts[-1] = f'<span style="{last_style}">{txts[-1]} ms</span>'
+        
         window.detection_history_label.setText(
-            '<body>'
-            + 'History<br>'
-            + "<br>".join(self.detection_history)
-            + '</body>'
+            f"<body>History<br>{''.join(txts)}</body>"
         )
         # if self.detecting:
         #     window.fallDetectionStatus.setText("ACTIVE")
@@ -92,6 +108,9 @@ class StickDetector(QThread):
         
         reset_str = parser['RuntimeSettings'].get("reset_pose", "(0.0, -1.2, 1.9, 0.0, -0.7, 1.57)")
         self.reset_pose = list(float(x) for x in reset_str.removeprefix('(').removesuffix(')').split(','))
+        
+        self.too_early_time = config["RuntimeSettings"].getint("too_early_time", 0.33)
+
         
         # we need to update the labels (if we can)
         try:
@@ -182,7 +201,9 @@ class StickDetector(QThread):
         self.scheduling = 1
         self.autoDropCatch = False # Flag for automatic drop catch
         self.qt_drawing = True
-        self.detection_history = deque([""]*5, maxlen=5)
+        
+        history_len = config["Settings"].getint("history_length", 2)
+        self.detection_history = deque([None]*history_len, maxlen=history_len)
 
         if config["Settings"].get("aoi", None):
             aoi_parts = config["Settings"].get("aoi").split(",")
@@ -616,7 +637,7 @@ class StickDetector(QThread):
             print("Downward motion detected!")
             if self.SpotIsConnected() is True:
                 if self.stick_drop_command_time:
-                    self.to_early = 0.33 - (time.time() - self.stick_drop_command_time) #read from config
+                    self.to_early = self.too_early_time - (time.time() - self.stick_drop_command_time) #read from config
                     print(f"{self.to_early=}")
                     if self.to_early > 0: 
                         time.sleep(self.to_early)
@@ -759,11 +780,7 @@ class StickDetector(QThread):
                         if self.stick_drop_command_time:
                             print(f"Elapsed time since drop command: { ((end_time - self.stick_drop_command_time)*1e3):.3f} ms")
                             
-                            drop_time = f"{int(((end_time - self.stick_drop_command_time)*1e3)):4d}"
-                            color = "90BE6D"
-                            self.detection_history.append(
-                                f'<span style="color:#{color};">{drop_time} ms</span><br>'
-                                )
+                            self.detection_history.append(((end_time - self.stick_drop_command_time)*1e3))
                             self._update_labels()
                         print(f"With AOI: {self.aoi}")
 
