@@ -206,7 +206,7 @@ class StickDetector(QThread):
         elif key == "2":
             if self.holder and self.stick_dropped:
                 self.stick_drop_command_time = None
-                self.holder.pullup()
+                self.holder.toggle_drop_pull()
                 print("Initiated stick pull up.")
 
     def mouse_callback(self, event, x, y, flags, param):

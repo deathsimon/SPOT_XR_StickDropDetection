@@ -46,13 +46,16 @@ class GuiContainer(QMainWindow):
             PySide6.QtWebEngineCore.QWebEngineSettings.WebAttribute.ShowScrollBars,
             False,
         )
-        # handle all the buttons predictiveSched_btn
-        self.window.schedulingDynamicBtn.clicked.connect(
+        # handle all the buttons
+        self.window.oraces_btn.clicked.connect(
             lambda: self.runner_thread.keyboard_callback(",")
+        )
+        self.window.reactive_btn.clicked.connect(
+            lambda: self.runner_thread.keyboard_callback(".")
         )
         
         # add a tooltip for help
-        self.window.schedulingDynamicBtn.setToolTip("""
+        self.window.oraces_btn.setToolTip("""
 Controls:
 d : Toggle Detection
 r : Reset Spot to default position
@@ -60,8 +63,9 @@ o : Open gripper
 c : Close gripper
 s : Sit down Spot
 1 : Drop Stick
-2 : Pull up Stick
-, : Toggle reactive/predictive scheduling
+2 : Toggle Stick drop / pull up
+, : Set predictive scheduling
+. : Set reactive scheduling
 f : Toggle fullscreen
 y : Toggle Qt-enhanced drawing
 a : Toggle automatic testing
@@ -69,7 +73,7 @@ Arrow Keys : Move the arm
 x / Ctrl+S : Save current state
 z / Ctrl+R : Reload state
 """)
-        self.window.schedulingDynamicBtn.setToolTipDuration(3000) # 3 seconds
+        self.window.oraces_btn.setToolTipDuration(3000) # 3 seconds
 
     def _dynamic_btn_sizer(self, btn: QPushButton):
         font = btn.font()

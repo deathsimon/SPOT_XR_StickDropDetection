@@ -19,14 +19,14 @@ class HolderClient:
             self.logger.error(f"Failed to send drop command: {e}")
             raise
 
-    def pullup(self):
+    def toggle_drop_pull(self):
         """Send pullup command to holder"""
         try:
-            response = requests.get(f"{self.base_url}/pullup")
+            response = requests.get(f"{self.base_url}/toggle_drop_pull")
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            self.logger.error(f"Failed to send pullup command: {e}")
+            self.logger.error(f"Failed to send toggle_drop_pull command: {e}")
             raise
 
     async def listen_for_updates(self, callback):
