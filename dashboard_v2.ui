@@ -18,8 +18,8 @@
         QLabel {
         color: white;
         }
-        QLabel[name=&quot;controlsLabel&quot;] {
-        color:
+        QWebEngineView {
+        border-radius: 5px;
         }
         QPushButton {
         background-color: #8D99AE;
@@ -312,6 +312,12 @@
           <layout class="QVBoxLayout" name="metricsLayout">
            <item>
             <widget class="QLabel" name="metricsLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="font">
               <font>
                <pointsize>12</pointsize>
@@ -334,13 +340,54 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
-               <layout class="QVBoxLayout" name="currentLatencyLayout">
+               <layout class="QVBoxLayout" name="currentLatencyLayout" stretch="1,1">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetDefaultConstraint</enum>
+                </property>
                 <item>
                  <widget class="QWebEngineView" name="latencycurrent_view" native="true">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="autoFillBackground">
+                   <bool>false</bool>
+                  </property>
                   <property name="url" stdset="0">
                    <url>
                     <string>http://kn-adrz-vsting.local:3000/d/CkIkS6LHz/falling-rod-demo?orgId=1&amp;panelId=2&amp;fullscreen&amp;kiosk</string>
                    </url>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="detection_history_label">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QLabel {
+background-color: #161719;
+border-radius: 5px;
+padding: 5px;
+font-size: 14px;
+font-family: Roboto, Helvetica Neue, Arial, sans-serif;
+font-weight: 500;
+}</string>
+                  </property>
+                  <property name="text">
+                   <string>&lt;span style=&quot; color:#ffaa00;&quot;&gt;100 ms&lt;/span&gt;&lt;br/&gt;200 ms&lt;br/&gt;300 ms&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="textFormat">
+                   <enum>Qt::RichText</enum>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
                   </property>
                  </widget>
                 </item>

@@ -1,3 +1,4 @@
+import configparser
 import sys
 
 # import threading
@@ -38,14 +39,7 @@ class GuiContainer(QMainWindow):
 
         # create the layouts
         self.setCentralWidget(self.window)
-        self.window.ministryLogo = QWebEngineView()
-        self.window.ministryLogo.load(
-            "https://www.bmbf.de/SiteGlobals/Frontend/Images/images/logo-en.svg?__blob=normal&v=4"
-        )
-        self.window.ministryLogo.page().settings().setAttribute(
-            PySide6.QtWebEngineCore.QWebEngineSettings.WebAttribute.ShowScrollBars,
-            False,
-        )
+
         # handle all the buttons
         self.window.oraces_btn.clicked.connect(
             lambda: self.runner_thread.keyboard_callback(",")
@@ -53,6 +47,17 @@ class GuiContainer(QMainWindow):
         self.window.reactive_btn.clicked.connect(
             lambda: self.runner_thread.keyboard_callback(".")
         )
+        
+        # set the webviews to the proper ip address
+        config = configparser.ConfigParser()
+        config.read("config")
+        vsting_ip = host=config["Settings"].get("vsting_ip", "kn-adrz-vsting.local")
+        for webview in dir(self.window):
+            if isinstance(getattr(self.window, webview), QWebEngineView):
+                wv : QWebEngineView = getattr(self.window, webview)
+                url = wv.url().toString()
+                url = url.replace("kn-adrz-vsting.local", vsting_ip)
+                wv.setUrl(url)
         
         # add a tooltip for help
         self.window.oraces_btn.setToolTip("""

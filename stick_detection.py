@@ -30,6 +30,13 @@ class StickDetector(QThread):
             # set reactive to red, o-races to grey
             window.reactive_btn.setStyleSheet("background-color: #ff0000;")
             window.oraces_btn.setStyleSheet("background-color: #666666;")
+        
+        window.detection_history_label.setText(
+            '<body>'
+            + 'History<br>'
+            + "<br>".join(self.detection_history)
+            + '</body>'
+        )
         # if self.detecting:
         #     window.fallDetectionStatus.setText("ACTIVE")
         #     window.fallDetectionStatus.setStyleSheet("background-color: #90BE6D;")
@@ -153,7 +160,7 @@ class StickDetector(QThread):
             self.stick_state = "???"
             print("Stick holder is disabled")
 
-        self.vsting = VStingClient()
+        self.vsting = VStingClient(host=config["Settings"].get("vsting_ip", "kn-adrz-vsting.local"))
 
         # Initialize shared variables
         self.frame = None  # Latest frame from video stream
@@ -175,6 +182,7 @@ class StickDetector(QThread):
         self.scheduling = 1
         self.autoDropCatch = False # Flag for automatic drop catch
         self.qt_drawing = True
+        self.detection_history = deque([""]*5, maxlen=5)
 
         if config["Settings"].get("aoi", None):
             aoi_parts = config["Settings"].get("aoi").split(",")
@@ -419,10 +427,11 @@ class StickDetector(QThread):
                     self.autoDropCatch = False
                 if self.autoDropCatch:
                     print("Auto Drop Catch enabled.")
-                    self.automation_timer.start(45000)  # Run sequence every 45 seconds
+                    self.automation_timer.start(120000)  # Run sequence every 120 seconds
                     self.run_automation_sequence()
             else:
                 self.automation_timer.stop()
+                Qtsin
                 print("Auto Drop Catch disabled.")
         
         # after some input we update our labels
@@ -634,7 +643,7 @@ class StickDetector(QThread):
         current_aoi = frame[y : y + h, x : x + w]
 
         if current_aoi.size == 0 or current_aoi.shape != self.prev_aoi.shape:
-            return
+            return False
 
         if self.fall_detection == 0:
             # Compute MSE
@@ -679,6 +688,8 @@ class StickDetector(QThread):
         # we first need to get into a valid state
         if self.stick_dropped:
             self.holder.toggle_drop_pull()
+            self.holder.toggle_drop_pull()
+            self.stick_dropped = False
             return
         
         # [TODO] might need to update prev_aoi before every drop?
@@ -686,15 +697,14 @@ class StickDetector(QThread):
         self.spot_arm.ready_position_at(self.reset_pose)
         self.detecting = True
         # Randomly drop stick
-        rand_drop = random.randint(0, 10000)    # 0~10 seconds
+        rand_drop = random.randint(3000, 10000)    # 3~10 seconds
         QTimer.singleShot(rand_drop, self.holder.drop)
-        
-        # Wait for another 3 seconds before opening the gripper
         
         # Wait for 20 seconds (after the drop), then open gripper, disable detection and pull up 3 secs later
         QTimer.singleShot(rand_drop+20000, self.spot_arm.open_gripper)
         QTimer.singleShot(rand_drop+20500, lambda: self.suspend_detection())
         QTimer.singleShot(rand_drop+23000, self.holder.toggle_drop_pull)
+        QTimer.singleShot(rand_drop+23500, self.holder.toggle_drop_pull)
         
         # # Wait for 20 seconds (after the drop) before pulling up, disable detection before that
         # QTimer.singleShot(rand_drop+19500, lambda: self.suspend_detection())
@@ -744,10 +754,17 @@ class StickDetector(QThread):
                     start_time = time.time()
                     changes = self.check_drop(frame)                    
                     end_time = time.time()
-                    if self.verbose and changes == True:
+                    if changes == True:
                         print(f"Drop Check Time: {((end_time - start_time)*1e3):.3f} ms")
                         if self.stick_drop_command_time:
                             print(f"Elapsed time since drop command: { ((end_time - self.stick_drop_command_time)*1e3):.3f} ms")
+                            
+                            drop_time = f"{int(((end_time - self.stick_drop_command_time)*1e3)):4d}"
+                            color = "90BE6D"
+                            self.detection_history.append(
+                                f'<span style="color:#{color};">{drop_time} ms</span><br>'
+                                )
+                            self._update_labels()
                         print(f"With AOI: {self.aoi}")
 
                 if self.qt_drawing == False:
