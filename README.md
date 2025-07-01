@@ -1,57 +1,134 @@
-## 6GEM Spot-XR Stick-Drop Demo (June 2025)
+# 6GEM: Real-time Networked Robotics Control with Embedded ROS Demo
 
-This Python script powers the 6GEM Spot-XR stick-drop demonstration, scheduled for June 2025.
+This repository contains the software for a demonstration of real-time networked robotics, presented at the **8th 6GEM General Assembly at TU Dortmund on June 17-18, 2025**.
 
-Its job is to detect when a stick begins to fall in a live video stream and command the gripper to snap shut before the object hits the ground.
+The project showcases the critical impact of network latency on remote robotic control. In our demonstration, a falling stick is monitored by one robot (the "Xplorer") via a video stream processed in an edge cloud. A second robot (the "Rescuer") must react in time to catch the stick based on commands sent over the network. The height at which the stick is caught serves as a direct and tangible measure of the end-to-end latency of the entire control loop.
 
-### Key Features
+## Demo Video
 
-- **Flexible Video Input**  
-  Supports both local cameras and remote RTSP streams.
-- **Interactive AOI Selection**  
-  Click and drag with your mouse to define an Area of Interest (AOI) around the stick’s resting position.
-- **Dual Detection Methods**  
-  - **Mean Squared Error (MSE)**  
-  - **Structural Similarity Index (SSIM)**  
-  Compare the AOI in each incoming frame against a static reference.  
-- **Threshold-Driven Trigger**  
-  When the computed MSE or SSIM score crosses its user-configurable threshold, the script instantly sends a “close” command to the gripper.
+The following video was recorded during the live demonstration at the event.
 
-### How It Works
-1. **Initialize Stream**  
-   Connect to your chosen video source.
-2. **Select AOI**
-   Drag the AoI around the stick using mouse to capture the reference frame.   
-3. **Monitor & Compare**  
-   For each new frame, the script computes MSE or SSIM over the AOI versus the reference frame.
-4. **Actuate Gripper**  
-   If the difference exceeds the predefined threshold, the gripper-close command will be issued, ideally securing the stick in mid-air.
-   If it's too late, please consider lowering the threshold.
-5. **Restart Detection**
-   After detecting a fall, the script stops the detection. Press `d' or draw a new AOI to restart the detection.
-6. **Exit the Script**
-   Press `q' to exit.
+[![Spot-XR Stick-Drop Demo](https://img.youtube.com/vi/5mrTymGEN-Q/0.jpg)](https://youtube.com/shorts/5mrTymGEN-Q?feature=share)
 
-***Other commands for Spot:***
+## Key Features
 
-- 'r': reset to the default setting for catching
-- 'o': open the gripper
-- 'c': close the gripper
-- 's': stow the arm and sit down
+- **Flexible Video Input**: Supports local cameras, remote RTSP streams, and ROS2 topics.
+- **Interactive AOI Selection**: Easily define an Area of Interest (AOI) by clicking and dragging with the mouse.
+- **Multiple Detection Methods**: Choose from three detection algorithms:
+  - **Mean Squared Error (MSE)**: Measures the average squared difference between the pixels of two images.
+  - **Structural Similarity Index (SSIM)**: Compares the structural information of two images.
+  - **Optical Flow**: Tracks the motion of features between frames to detect downward movement.
+- **Real-time Configuration**: Adjust detection parameters on-the-fly using the `hot_load_config` file.
+- **GUI Dashboard**: A user-friendly interface for monitoring the video feed and system status.
 
-### Dependency
+## Getting Started
 
-- numpy - Version: 1.24.2
-- opencv-python - Version: 4.11.0.86
-- ultralytics - Version: 8.3.99
-- websockets - Version: 13.1
-- scikit-image - Version: 0.21.0
+### Prerequisites
 
-### RTSP
+- Python 3.8+
+- A running Spot robot with its WebSocket server enabled.
 
-- Download SimpleRTSP server: wget https://github.com/aler9/rtsp-simple-server/releases/download/v0.16.0/rtsp-simple-server_v0.16.0_linux_amd64.tar.gz
-- Extract and start the RTSP Server: RTSP_RTSPADDRESS=(YOUR IP):(YOUR PORT) ./rtsp-simple-server
-- Stream webamera: ffmpeg -i /dev/video* -rtsp_transport tcp -c:v libx264 -preset ultrafast -tune zerolatency -b:v 500k -c:a aac -strict experimental -f rtsp rtsp://(YOUR IP):(YOUR PORT)/live -v verbose
-- Update the rtsp_url in config to rtsp://(YOUR IP):(YOUR PORT)/live
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd SPOT_XR_Detection_Stick
+   ```
+
+2. **Install the dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Configure the application:**
+   - Open the `config` file and set the `video_source` (either `RTSP`, `Camera`, or `ROS2`).
+   - If using RTSP or a specific camera, update the `rtsp_url` or `camera_index` accordingly.
+   - Set the `IP` and `port` of the Spot robot's WebSocket server.
+
+4. **Run the application:**
+   ```bash
+   python dashboard.py
+   ```
+
+## How It Works
+
+1. **Initialization**: The application connects to the specified video source and the Spot robot.
+2. **AOI Selection**: The user draws a rectangle on the video feed to define the Area of Interest (AOI) where the stick is located.
+3. **Detection**: The application continuously monitors the AOI for changes. Depending on the selected `fall_detection_method`, it uses MSE, SSIM, or Optical Flow to detect the stick's movement.
+4. **Gripper Actuation**: When the detection algorithm determines that the stick is falling, it sends a "close" command to the Spot robot's gripper.
+5. **Reset**: After a fall is detected, the system can be reset for the next attempt.
+
+## Configuration
+
+The application uses two configuration files:
+
+- **`config`**: This file contains the main settings for the application, such as the video source, robot IP address, and default detection parameters. These settings are loaded once at startup.
+- **`hot_load_config`**: This file allows you to adjust detection parameters in real-time. Any changes saved to this file will be immediately applied by the application.
+
+### `hot_load_config` Parameters
+
+| Parameter                 | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `fall_detection_method`   | The detection method to use: `0` for MSE, `1` for SSIM, `2` for Optical Flow. |
+| `MSE_threshold`           | The MSE threshold for detecting a fall.                                     |
+| `SSIM_change_threshold`   | The SSIM change threshold for detecting a fall.                             |
+| `of_angle_tolerance`      | The angle tolerance for the optical flow algorithm.                         |
+| `of_magnitude_thres`      | The magnitude threshold for the optical flow algorithm.                     |
+| `stored_frames`           | The number of frames to store for comparison.                               |
+| `required_frames`         | The number of consecutive frames that must exceed the threshold to trigger a fall. |
+
+## Controls
+
+| Key | Action                               |
+| --- | ------------------------------------ |
+| `d` | Toggle detection on/off.             |
+| `r` | Reset the Spot Arm to its default position. |
+| `o` | Open the gripper.                    |
+| `c` | Close the gripper.                   |
+| `s` | Stow the arm and sit down.           |
+| `1` | Manually trigger the stick to drop.  |
+| `2` | Manually reset the stick holder.     |
+| `x` | Save the current AOI to the `hot_load_config` file. |
+| `z` | Reload the settings from the `hot_load_config` file. |
+| `,` | Set predictive scheduling.           |
+| `.` | Set reactive scheduling.             |
+| `f` | Toggle fullscreen mode.              |
+| `q` | Quit the application.                |
+
+## Project Structure
+
+```
+.
+├── dashboard.py            # Main application entry point (GUI)
+├── stick_detection.py      # Core detection logic
+├── Spot_arm.py             # WebSocket client for Spot Arm control
+├── ApiManager.py           # Defines the API for the Spot robot
+├── holdercontrol.py        # Server-side control for the stick holder
+├── rodholderclient.py      # Client for the stick holder
+├── video_source_*.py       # Video source implementations
+├── config                  # Main configuration file
+├── hot_load_config         # Hot-reloadable configuration file
+├── dashboard_v2.ui         # UI layout file
+└── requirements.txt        # Python dependencies
+```
+
+## RTSP Setup (Optional)
+
+If you are using an RTSP stream as the video source, you can use the following steps to set up a simple RTSP server.
+
+1.  **Download the RTSP server:**
+    ```bash
+    wget https://github.com/aler9/rtsp-simple-server/releases/download/v0.16.0/rtsp-simple-server_v0.16.0_linux_amd64.tar.gz
+    ```
+2.  **Extract and start the server:**
+    ```bash
+    RTSP_RTSPADDRESS=<YOUR_IP>:<YOUR_PORT> ./rtsp-simple-server
+    ```
+3.  **Stream your webcam:**
+    ```bash
+    ffmpeg -i /dev/video* -rtsp_transport tcp -c:v libx264 -preset ultrafast -tune zerolatency -b:v 500k -c:a aac -strict experimental -f rtsp rtsp://<YOUR_IP>:<YOUR_PORT>/live -v verbose
+    ```
+4.  **Update the `rtsp_url` in the `config` file.**
 
 
